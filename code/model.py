@@ -1,3 +1,4 @@
+# -*- encoding:utf-8 -*-
 import tensorflow as tf
 from functools import reduce
 from operator import mul

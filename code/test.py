@@ -1,3 +1,4 @@
+# -*- encoding:utf-8 -*-
 from model import MultiModal
 import tensorflow as tf
 import numpy as np
@@ -6,10 +7,11 @@ import os
 import cv2
 
 # 选择gpu设备
-deviceId = input("device id: ")
-os.environ["CUDA_VISIBLE_DEVICES"] = deviceId
+# deviceId = input("device id: ")
+# os.environ["CUDA_VISIBLE_DEVICES"] = deviceId
 # 选择文件夹
 dirId = input("dir id: ")
+dirId = str(dirId)
 
 # 加载训练好的模型
 graph = tf.Graph()

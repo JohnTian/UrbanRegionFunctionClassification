@@ -1,3 +1,4 @@
+# -*- encoding:utf-8 -*-
 from model import MultiModal
 import tensorflow as tf
 import time
@@ -25,6 +26,7 @@ def read_and_decode_train(filename):
 
     visit = tf.decode_raw(features['visit'], tf.float64)
     visit = tf.reshape(visit, [7, 26, 24])
+    visit = visit / tf.maximum(visit, axis=1)
 
     label = tf.cast(features['label'], tf.int64)
     return image, visit, label
@@ -72,7 +74,7 @@ def load_valid_set():
 
 def train(model):
     # network
-    amount = 84078
+    amount = 20000
     image_batch_train, visit_batch_train, label_batch_train = load_training_set()
     image_batch_valid, visia_batch_valid, label_batch_valid = load_valid_set()
 
@@ -138,9 +140,10 @@ def train(model):
 
 
 if __name__ == '__main__':
-    deviceId = input("device id: ")
-    os.environ["CUDA_VISIBLE_DEVICES"] = deviceId
+    # deviceId = input("device id: ")
+    # os.environ["CUDA_VISIBLE_DEVICES"] = deviceId
     dirId = input("dir id: ")
+    dirId = str(dirId)
     model = MultiModal()
     batch_size = model.batch_size
     train(model)
