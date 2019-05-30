@@ -32,7 +32,9 @@ pandas
 
 ### 1.3 数据转换
 把visit数据转换为7x26x24的矩阵，这一步耗时比较长，大概要一个小时。
+
 ```
+cd code
 python visit2array.py
 ```
 转换后的数据存储在:
@@ -40,7 +42,9 @@ python visit2array.py
 - data/npy/test_visit
 
 ### 1.4 生成tfrecord
+
 ```
+cd code
 python tfrecord.py
 ```
 生成的tfrecord存储在：
@@ -50,7 +54,9 @@ python tfrecord.py
 备注：由于这里直接加载了所有数据，大约要占用5G内存。
 
 ### 1.5 训练
+
 ```
+cd code
 python train.py
 ```
 为了调参方便，每组实验存在不同的文件夹里。
