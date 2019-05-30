@@ -26,7 +26,7 @@ def read_and_decode_train(filename):
 
     visit = tf.decode_raw(features['visit'], tf.float64)
     visit = tf.reshape(visit, [7, 26, 24])
-    visit = visit / tf.maximum(visit, axis=1)
+    visit = visit / tf.math.reduce_max(visit)
 
     label = tf.cast(features['label'], tf.int64)
     return image, visit, label
