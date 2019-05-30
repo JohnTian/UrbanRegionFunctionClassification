@@ -62,7 +62,7 @@ if not os.path.exists("../result/"):
 
 # 将预测结果写入文件
 num = 0
-with open("../result/valid.txt", "w+") as f
+with open("../result/valid.txt", "w+") as f:
     for index, prediction in enumerate(predictions):
         prediction = prediction + 1
         f.write("%s \t %03d\n"%(str(index).zfill(6), prediction))
