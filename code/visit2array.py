@@ -1,3 +1,4 @@
+# -*- encoding:utf-8 -*-
 import time
 import numpy as np
 import sys
@@ -29,8 +30,8 @@ def visit2array(table):
         for item in string.split(','):
             temp.append([item[0:8], item[9:].split("|")])
         for date, visit_lst in temp:
-            # x - 第几周
-            # y - 第几天
+            # x - 周几
+            # y - 第几周
             # z - 几点钟
             # value - 到访的总人数
             x, y = date2position[datestr2dateint[date]]
