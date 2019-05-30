@@ -35,20 +35,23 @@ with sess.graph.as_default():
 images = []
 visits = []
 labels = []
+filenames = []
 NPYROOT = '../data/npy/train_visit/'
 with open('../data/valid.txt', 'r') as fi:
     for line in fi.readlines():
-        img_name = line.split('/')[-1]
-        image = cv2.imread(line)[0:88,0:88,:]
+        line = line.strip()
+        image = cv2.imread(line, cv2.IMREAD_COLOR)[0:88,0:88,:]
         images.append(image)
-        visit = np.load(os.path.sep.join(NPYROOT, img_name.replace('jpg', 'npy')))
+        img_name = line.split('/')[-1]
+        visit = np.load(os.path.join(NPYROOT, img_name.replace('jpg', 'npy')))
         visits.append(visit)
         labels.append(int(line.split('/')[-2]))
+        filenames.append(img_name)
 
 predictions = []
 # 每次测试1000条数据，如果显存不够可以改小一些
 SUMV = len(labels)
-STEP = 50
+STEP = 100
 for i in range(0, SUMV, STEP):
     predictions.extend(sess.run(tf.argmax(model.prediction, 1),
                           feed_dict={model.image: images[i:i+STEP],
@@ -65,8 +68,10 @@ num = 0
 with open("../result/valid.txt", "w+") as f:
     for index, prediction in enumerate(predictions):
         prediction = prediction + 1
-        f.write("%s \t %03d\n"%(str(index).zfill(6), prediction))
-        if prediction == labels[index]:
+        filename = filenames[index]
+        f.write("%s \t %03d\n" % (filename, prediction))
+        #if int(filename.split('_')[-1].split('.')[0]) == prediction:
+        if labels[index] == prediction:
             num += 1
 
 print("验证集图像数量: %d" % SUMV)
