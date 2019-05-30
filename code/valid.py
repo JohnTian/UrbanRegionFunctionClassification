@@ -48,30 +48,27 @@ with open('../data/valid.txt', 'r') as fi:
         labels.append(int(line.split('/')[-2]))
         filenames.append(img_name)
 
-predictions = []
-# 每次测试1000条数据，如果显存不够可以改小一些
-SUMV = len(labels)
-STEP = 100
-for i in range(0, SUMV, STEP):
-    predictions.extend(sess.run(tf.argmax(model.prediction, 1),
-                          feed_dict={model.image: images[i:i+STEP],
-                                     model.visit: visits[i:i+STEP],
-                                     model.training: False}))
-    print('第%d次完成' % i)
-
 # 新建文件夹
 if not os.path.exists("../result/"):
     os.mkdir("../result/")
 
 # 将预测结果写入文件
 num = 0
+SUMV = len(labels)
+
 with open("../result/valid.txt", "w+") as f:
-    for index, prediction in enumerate(predictions):
+    for i in range(SUMV):
+        image = images[i]
+        visit = visits[i]
+        label = labels[i]
+        filename = filenames[i]
+        prediction = sess.run(tf.argmax(model.prediction, 1),
+                          feed_dict={model.image: [image],
+                                     model.visit: [visit],
+                                     model.training: False}))
         prediction = prediction + 1
-        filename = filenames[index]
         f.write("%s \t %03d\n" % (filename, prediction))
-        #if int(filename.split('_')[-1].split('.')[0]) == prediction:
-        if labels[index] == prediction:
+        if label == prediction:
             num += 1
 
 print("验证集图像数量: %d" % SUMV)
