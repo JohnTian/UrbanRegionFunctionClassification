@@ -36,7 +36,7 @@ images = []
 visits = []
 labels = []
 NPYROOT = '../data/npy/train_visit/'
-with open('../data/valid.txt') as fi:
+with open('../data/valid.txt', 'r') as fi:
     for line in fi.readlines():
         img_name = line.split('/')[-1]
         image = cv2.imread(line)[0:88,0:88,:]
