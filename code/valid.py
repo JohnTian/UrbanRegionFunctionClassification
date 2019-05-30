@@ -65,11 +65,14 @@ with open("../result/valid.txt", "w+") as f:
         prediction = sess.run(tf.argmax(model.prediction, 1),
                           feed_dict={model.image: [image],
                                      model.visit: [visit],
-                                     model.training: False}))
-        prediction = prediction + 1
+                                     model.training: False})
+        prediction = prediction[0] + 1
+        #print('filename: %s \t label: %d' % (filename, label))
+        #print(prediction)
         f.write("%s \t %03d\n" % (filename, prediction))
         if label == prediction:
             num += 1
+        print('%dth done' % i)
 
 print("验证集图像数量: %d" % SUMV)
 print("验证通过数量  : %d" % num)
