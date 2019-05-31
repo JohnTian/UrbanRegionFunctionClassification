@@ -64,7 +64,8 @@ if __name__ == '__main__':
         os.makedirs("../data/tfrecord/")
 
     # data = get_data("../data/train_oversampling.txt")
-    data = get_data("../data/train.txt")
+    # data = get_data("../data/train.txt")
+    data = get_data("../data/train4w.txt")
     _convert_dataset(data, "../data/tfrecord/", "train")
 
     # data = get_data("../data/valid.txt")

@@ -67,7 +67,7 @@ def load_valid_set():
 def train(model):
     # network
     # amount = 82827
-    amount = 36949
+    amount = 40000
     image_batch_train, visit_batch_train, label_batch_train = load_training_set()
     image_batch_valid, visia_batch_valid, label_batch_valid = load_valid_set()
 
