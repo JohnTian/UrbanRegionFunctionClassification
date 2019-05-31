@@ -84,11 +84,11 @@ class MultiModal(object):
                 flatten = tf.layers.flatten(pool)
         return flatten
 
-    def visit_network(self, image):
+    def visit_network(self, visit):
         channel = 32
         with tf.name_scope("Resnet-visit"):
             with tf.name_scope('stage1'):
-                conv = self.conv2d(image, 24, channel, 7, 1)
+                conv = self.conv2d(visit, 24, channel, 7, 1)
                 bn = tf.layers.batch_normalization(conv, axis=3, training=self.training)
                 relu = tf.nn.relu(bn)
             with tf.name_scope('stage2'):
@@ -120,6 +120,13 @@ class MultiModal(object):
             shape = variable.get_shape()
             num_params += reduce(mul, [dim.value for dim in shape], 1)
         return num_params
+
+
+    def image_networkX(self, image):
+        pass
+
+    def visit_networkX(self, visit):
+        pass
 
 
 if __name__ == '__main__':
