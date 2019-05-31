@@ -17,16 +17,17 @@ def read_and_decode_train(filename):
                                        })  # return image and label
     image = tf.decode_raw(features['data'], tf.uint8)
     image = tf.reshape(image, [100, 100, 3])
+    # image = tf.image.resize_images(image, [88,88]) # add
     image = tf.random_crop(image, [88, 88, 3]) # 随机裁剪
     image = tf.image.random_flip_left_right(image) # 随机左右翻转
     image = tf.image.random_flip_up_down(image) # 随机上下翻转
-    # image = tf.image.random_brightness(image, max_delta=0.1)  # 随机亮度调整
-    # image = tf.image.random_contrast(image, lower=0.8, upper=1.2)  # 随机对比度
+    # image = tf.image.random_brightness(image, max_delta=0.1)  # 随机亮度调整 #
+    # image = tf.image.random_contrast(image, lower=0.8, upper=1.2)  # 随机对比度 #
     image = tf.cast(image, tf.float32) / 255.0
 
     visit = tf.decode_raw(features['visit'], tf.float64)
     visit = tf.reshape(visit, [7, 26, 24])
-    visit = visit / tf.math.reduce_max(visit)
+    visit = visit / tf.reduce_max(visit)
 
     label = tf.cast(features['label'], tf.int64)
     return image, visit, label
@@ -74,7 +75,8 @@ def load_valid_set():
 
 def train(model):
     # network
-    amount = 20000
+    # amount = 82827
+    amount = 36949
     image_batch_train, visit_batch_train, label_batch_train = load_training_set()
     image_batch_valid, visia_batch_valid, label_batch_valid = load_valid_set()
 
