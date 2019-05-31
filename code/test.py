@@ -33,7 +33,7 @@ with sess.graph.as_default():
 images = []
 visits = []
 def random_crop_and_normal(image_path, h=88, w=88):
-    im = cv2.waitKey(image_path)
+    im = cv2.imread(image_path)
     height, width, channel = im.shape
     y = random.randint(1, height - h)
     x = random.randint(1, width - w)
