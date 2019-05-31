@@ -1,6 +1,7 @@
 # -*- encoding:utf-8 -*-
 import os
 import cv2
+import random
 import numpy as np
 import pandas as pd
 import tensorflow as tf
@@ -31,12 +32,17 @@ with sess.graph.as_default():
 # 载入所有测试数据
 images = []
 visits = []
+def random_crop_and_normal(image_path, h=88, w=88):
+    im = cv2.waitKey(image_path)
+    height, width, channel = im.shape
+    y = random.randint(1, height - h)
+    x = random.randint(1, width - w)
+    crop = im[y:y+h, x:x+w] / 255.0
+    return crop
+
 for i in range(10000):
     image_path = "../data/test_image/test/"+str(i).zfill(6)+".jpg"
-    # image = cv2.imread(image_path, cv2.IMREAD_COLOR)[0:88,0:88,:] / 255.0
-    image = tf.gfile.FastGFile(image_path, 'rb').read()
-    image = tf.random_crop(image, [88, 88, 3])
-    image = tf.cast(image, tf.float32)/255.0
+    image = random_crop_and_normal(image_path)
     images.append(image)
 
     visit_path = "../data/npy/test_visit/"+str(i).zfill(6)+".npy"
