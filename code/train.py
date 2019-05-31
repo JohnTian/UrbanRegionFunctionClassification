@@ -1,59 +1,51 @@
 # -*- encoding:utf-8 -*-
-from model import MultiModal
-import tensorflow as tf
-import time
 import os
+import time
+import tensorflow as tf
+from model import MultiModal
 
 
 def read_and_decode_train(filename):
-    filename_queue = tf.train.string_input_producer([filename])  # create a queue
+    filename_queue = tf.train.string_input_producer([filename])
     reader = tf.TFRecordReader()
-    _, serialized_example = reader.read(filename_queue)  # return file_name and file
+    _, serialized_example = reader.read(filename_queue)
     features = tf.parse_single_example(serialized_example,
                                        features={
                                            'data': tf.FixedLenFeature([], tf.string),
                                            'visit': tf.FixedLenFeature([], tf.string),
                                            'label': tf.FixedLenFeature([], tf.int64),
-                                       })  # return image and label
+                                       })
     image = tf.decode_raw(features['data'], tf.uint8)
     image = tf.reshape(image, [100, 100, 3])
-    # image = tf.image.resize_images(image, [88,88]) # add
-    image = tf.random_crop(image, [88, 88, 3]) # 随机裁剪
-    image = tf.image.random_flip_left_right(image) # 随机左右翻转
-    image = tf.image.random_flip_up_down(image) # 随机上下翻转
-    # image = tf.image.random_brightness(image, max_delta=0.1)  # 随机亮度调整 #
-    # image = tf.image.random_contrast(image, lower=0.8, upper=1.2)  # 随机对比度 #
+    image = tf.random_crop(image, [88, 88, 3])
     image = tf.cast(image, tf.float32) / 255.0
 
     visit = tf.decode_raw(features['visit'], tf.float64)
     visit = tf.reshape(visit, [7, 26, 24])
     visit = visit / tf.reduce_max(visit)
-
     label = tf.cast(features['label'], tf.int64)
     return image, visit, label
 
-
 def read_and_decode_valid(filename):
-    filename_queue = tf.train.string_input_producer([filename])  # create a queue
+    filename_queue = tf.train.string_input_producer([filename])
     reader = tf.TFRecordReader()
-    _, serialized_example = reader.read(filename_queue)  # return file_name and file
+    _, serialized_example = reader.read(filename_queue)
     features = tf.parse_single_example(serialized_example,
                                        features={
                                            'data': tf.FixedLenFeature([], tf.string),
                                            'visit': tf.FixedLenFeature([], tf.string),
                                            'label': tf.FixedLenFeature([], tf.int64),
-                                       })  # return image and label
+                                       })
     image = tf.decode_raw(features['data'], tf.uint8)
     image = tf.reshape(image, [100, 100, 3])
-    image = tf.random_crop(image, [88, 88, 3]) # 随机裁剪
+    image = tf.random_crop(image, [88, 88, 3])
     image = tf.cast(image, tf.float32)/255.0
 
     visit = tf.decode_raw(features['visit'], tf.float64)
     visit = tf.reshape(visit, [7, 26, 24])
-
+    visit = visit / tf.reduce_max(visit)
     label = tf.cast(features['label'], tf.int64)
     return image, visit, label
-
 
 def load_training_set():
     with tf.name_scope('input_train'):
@@ -62,7 +54,6 @@ def load_training_set():
             [image_train, visit_train, label_train], batch_size=batch_size, capacity=2048, min_after_dequeue=2000, num_threads=4
         )
     return image_batch_train, visit_batch_train, label_batch_train
-
 
 def load_valid_set():
     with tf.name_scope('input_valid'):
