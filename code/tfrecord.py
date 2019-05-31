@@ -63,8 +63,9 @@ if __name__ == '__main__':
     if not os.path.exists("../data/tfrecord/"):
         os.makedirs("../data/tfrecord/")
 
-    data = get_data("../data/train_oversampling.txt")
+    # data = get_data("../data/train_oversampling.txt")
+    data = get_data("../data/train.txt")
     _convert_dataset(data, "../data/tfrecord/", "train")
 
-    data = get_data("../data/valid.txt")
-    _convert_dataset(data, "../data/tfrecord/", "valid")
+    # data = get_data("../data/valid.txt")
+    # _convert_dataset(data, "../data/tfrecord/", "valid")
