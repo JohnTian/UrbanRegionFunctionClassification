@@ -1,9 +1,13 @@
 # -*- encoding:utf-8 -*-
 import os
 import time
+import numpy as np
 import tensorflow as tf
 from tensorflow.python import keras as keras
 
+batch_size = 512
+epochs = 200
+num_classes = 9
 
 def read_and_decode_train(filename):
     filename_queue = tf.train.string_input_producer([filename])
@@ -20,11 +24,12 @@ def read_and_decode_train(filename):
     image = tf.random_crop(image, [88, 88, 3])
     image = tf.cast(image, tf.float32) / 255.0
 
-    visit = tf.decode_raw(features['visit'], tf.float64)
+    visit = tf.decode_raw(features['visit'], tf.float32)
     visit = tf.reshape(visit, [7, 26, 24])
     visit = tf.transpose(visit, [2, 1, 0])
     visit = visit / tf.reduce_max(visit)
     label = tf.cast(features['label'], tf.int64)
+    label = tf.one_hot(label, num_classes)
     return image, visit, label
 
 def read_and_decode_valid(filename):
@@ -42,11 +47,12 @@ def read_and_decode_valid(filename):
     image = tf.random_crop(image, [88, 88, 3])
     image = tf.cast(image, tf.float32)/255.0
 
-    visit = tf.decode_raw(features['visit'], tf.float64)
+    visit = tf.decode_raw(features['visit'], tf.float32)
     visit = tf.reshape(visit, [7, 26, 24])
     visit = tf.transpose(visit, [2, 1, 0])
     visit = visit / tf.reduce_max(visit)
     label = tf.cast(features['label'], tf.int64)
+    label = tf.one_hot(label, num_classes)
     return image, visit, label
 
 def load_training_set():
@@ -70,6 +76,7 @@ def build_image_model(height, width, channel):
     image_base_model = keras.applications.Xception(
         include_top=False,
         weights='imagenet',
+        #input_tensor=image_input,
         input_shape=input_shape)
     image_base_model.trainable = False
     image_x = image_base_model.output
@@ -79,14 +86,11 @@ def build_image_model(height, width, channel):
     image_model = keras.models.Model(inputs=image_base_model.input, outputs=image_y, name='image')
     return image_model
 
-def build_visit_model(height, width, depth, filters=(16, 32, 64)):
-    # initialize the input shape and channel dimension, assuming
-    # TensorFlow/channels-last ordering
-    inputShape = (height, width, depth)
+def build_visit_model(visit_input, filters=(16, 32, 64)):
     chanDim = -1
 
     # define the model input
-    inputs = keras.layers.Input(shape=inputShape)
+    inputs = visit_input
 
     # loop over the number of filters
     for (i, f) in enumerate(filters):
@@ -150,23 +154,22 @@ def train(nb_classes):
 
     ## Build model
     image_model = build_image_model(88, 88, 3)
-    visit_model = build_visit_model(26, 24, 7)
+
+    visit_input = keras.layers.Input(shape=(26,24,7))
+    visit_model = build_visit_model(visit_input)
     combined_x = keras.layers.concatenate([image_model.output, visit_model.output])
     output = keras.layers.Dense(nb_classes, activation="softmax")(combined_x)
     model = keras.models.Model(
-        inputs=[image_model.input, visit_model.input], 
-        outputs=output, 
+        inputs=[image_model.input, visit_model.input],
+        outputs=output,
         name='imageVisit'
     )
     model.compile(loss='categorical_crossentropy',
-                optimizer=Adam(lr=lr_schedule(0)),
+                optimizer=keras.optimizers.Adam(lr=lr_schedule(0)),
                 metrics=['accuracy'])
     model.summary()
 
     ## Fit and Train
-    batch_size = 512
-    epochs = 200
-    num_classes = nb_classes
     # Prepare model model saving directory.
     save_dir = os.path.join(os.getcwd(), 'saved_models')
     model_name = 'urbanRegion_%s_model.h5'
@@ -188,7 +191,7 @@ def train(nb_classes):
     # Fit
     model.fit(
         x=[image_batch_train, visit_batch_train],
-        y=label_batch_train,
+        y=[label_batch_train],
         batch_size=batch_size,
         epochs=epochs,
         validation_data=([image_batch_valid, visia_batch_valid], label_batch_valid),
