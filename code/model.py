@@ -79,7 +79,7 @@ class MultiModal(object):
                 res = self.residual(res, [channel*4, channel*2, channel*2, channel*8], 2, with_shortcut=True)
             # with tf.name_scope('stage5'):
             #     res = self.residual(res, [channel*8, channel*4, channel*4, channel*16], 2, with_shortcut=True)
-                pool = tf.nn.avg_pool(res, [1, 6, 6, 1], strides=[1, 1, 1, 1], padding='VALID')
+                pool = tf.nn.avg_pool(res, [1, 4, 4, 1], strides=[1, 1, 1, 1], padding='VALID')
             with tf.name_scope('fc'):
                 flatten = tf.layers.flatten(pool)
         return flatten
@@ -97,11 +97,11 @@ class MultiModal(object):
                 res = self.residual(res, [channel*2, channel, channel, channel*4], 2, with_shortcut=True)
             with tf.name_scope('stage4'):
                 res = self.residual(res, [channel*4, channel*2, channel*2, channel*8], 2, with_shortcut=True)
-            with tf.name_scope('stage5'):
-                res = self.residual(res, [channel*8, channel*4, channel*4, channel*16], 2, with_shortcut=True)
-            with tf.name_scope('stage6'):
-                res = self.residual(res, [channel*16, channel*8, channel*8, channel*32], 2, with_shortcut=True)
-                pool = tf.nn.avg_pool(res, [1, 1, 2, 1], strides=[1, 1, 1, 1], padding='VALID')
+            # with tf.name_scope('stage5'):
+                # res = self.residual(res, [channel*8, channel*4, channel*4, channel*16], 2, with_shortcut=True)
+            # with tf.name_scope('stage6'):
+                # res = self.residual(res, [channel*16, channel*8, channel*8, channel*32], 2, with_shortcut=True)
+                pool = tf.nn.avg_pool(res, [1, 1, 4, 1], strides=[1, 1, 1, 1], padding='VALID')
             with tf.name_scope('fc'):
                 flatten = tf.layers.flatten(pool)
         return flatten
