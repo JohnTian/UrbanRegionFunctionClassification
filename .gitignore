@@ -4,3 +4,6 @@ data/
 result/
 *.pyc
 model/
+dataset/
+output/
+UrbanRegionData/
