@@ -45,7 +45,9 @@ def visit2array(table):
             x, y = date2position[datestr2dateint[date]]
             for visit in visit_lst:
                 init[x][y][str2int[visit]] += 1
-    return init / np.max(init)
+    # return init / np.max(init)
+    return init
+
 
 
 def random_crop_and_normal(image_path, h=88, w=88):
@@ -53,8 +55,9 @@ def random_crop_and_normal(image_path, h=88, w=88):
     height, width, _ = im.shape
     y = random.randint(1, height - h)
     x = random.randint(1, width - w)
-    crop = im[y:y+h, x:x+w] / 255.0
-    return crop
+    crop = im[y:y+h, x:x+w]
+    # return crop / 255.0
+	return crop
 
 
 def build_DataSet(dataFolder):
@@ -87,10 +90,10 @@ def build_DataSet(dataFolder):
 			if not os.path.exists(dirPath):
 				os.makedirs(dirPath)
 			for filePath in filePaths:
-				# image 随机裁剪加归一化 88*88*3
+				# image
 				image = random_crop_and_normal(filePath)
 				image = np.reshape(image, (1, image.shape[0]*image.shape[1]*image.shape[2]))
-				# visit 归一化 7x26x24
+				# visit
 				table = pd.read_table(filePath.replace('jpg','txt'), header=None)
 				visit = visit2array(table)
 				visit = np.reshape(visit, (1, visit.shape[0]*visit.shape[1]*visit.shape[2]))
@@ -98,6 +101,7 @@ def build_DataSet(dataFolder):
 				imiv = np.append(image, visit)
 				imiv = np.append(imiv, [0]*48)
 				imiv = np.reshape(imiv, (96, 96, 3))
+				imiv = imiv / np.max(imiv)
 				# save
 				filename = filePath.split(os.path.sep)[-1]
 				p = os.path.sep.join([dirPath, filename.replace('jpg', 'npy')])
