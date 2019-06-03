@@ -4,8 +4,10 @@
 
 # import the necessary packages
 from keras.models import Sequential
-from keras.layers.core import Dense
+from keras.layers.core import Dense, Flatten, Activation, Dropout
 from keras.optimizers import SGD
+from keras.layers.convolutional import MaxPooling2D, AveragePooling2D
+from keras.layers.normalization import BatchNormalization
 from keras.utils import to_categorical
 from sklearn.metrics import classification_report
 from scut import config
@@ -86,10 +88,18 @@ testGen = csv_feature_generator(testPath, config.BATCH_SIZE,
 
 # define our simple neural network
 model = Sequential()
-# model.add(Dense(256, input_shape=(7 * 7 * 2048,), activation="relu"))
 model.add(Dense(256, input_shape=(3 * 3 * 2048,), activation="relu"))
-model.add(Dense(16, activation="relu"))
+model.add(BatchNormalization(axis=-1))
+# model.add(MaxPooling2D(pool_size=(2, 2)))
+model.add(Dropout(0.25))
+
+# model.add(Flatten())
+model.add(Dense(16, activation='relu'))
+model.add(BatchNormalization(axis=-1))
+model.add(Dropout(0.5))
+
 model.add(Dense(len(config.CLASSES), activation="softmax"))
+model.summary()
 
 # compile the model
 opt = SGD(lr=1e-3, momentum=0.9, decay=1e-3 / 25)
