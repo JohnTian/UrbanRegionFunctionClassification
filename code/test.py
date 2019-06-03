@@ -8,11 +8,12 @@ import tensorflow as tf
 from model import MultiModal
 
 
-# 选择文件夹
+print("[INFO] 选择训练模型所在文件夹...")
 dirId = input("dir id: ")
 dirId = str(dirId)
 
 # 加载训练好的模型
+print("[INFO] 加载训练模型...")
 graph = tf.Graph()
 sess = tf.InteractiveSession(graph=graph)
 with sess.graph.as_default():
@@ -29,12 +30,12 @@ with sess.graph.as_default():
             tf.logging.info('Restoring model from {}'.format(last_file))
             saver.restore(sess, last_file)
 
-# 载入所有测试数据
+print("[INFO] 加载测试数据...")
 images = []
 visits = []
 def random_crop_and_normal(image_path, h=88, w=88):
     im = cv2.imread(image_path)
-    height, width, channel = im.shape
+    height, width, _ = im.shape
     y = random.randint(1, height - h)
     x = random.randint(1, width - w)
     crop = im[y:y+h, x:x+w] / 255.0
@@ -51,13 +52,21 @@ for i in range(10000):
     visits.append(visit)
 
 # 每次测试1000条数据，如果显存不够可以改小一些
+print("[INFO] 开启测试...")
 predictions = []
-for i in range(10):
-    predictions.extend(sess.run(tf.argmax(model.prediction, 1),
-                          feed_dict={model.image: images[i*1000:i*1000+1000],
-                                     model.visit: visits[i*1000:i*1000+1000],
-                                     model.training: False}))
-    print(i)
+interval = 1000
+for i in range(0, len(images), interval):
+    predictions.extend(
+        sess.run(
+            tf.argmax(model.prediction, 1),
+            feed_dict={
+                model.image: images[i:i+interval],
+                model.visit: visits[i:i+interval],
+                model.training: False
+            }
+        )
+    )
+    print('[INFO] 第{}次测试结束!'.format(i+interval))
 
 # 新建文件夹
 if not os.path.exists("../result/"):
@@ -67,4 +76,4 @@ if not os.path.exists("../result/"):
 with open("../result/result.txt", "w+") as f:
     for index, prediction in enumerate(predictions):
         f.write("%s \t %03d\n"%(str(index).zfill(6), prediction+1))
-print("测试完成")
+print("[INFO] 测试完成...")
