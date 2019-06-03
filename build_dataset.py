@@ -57,7 +57,7 @@ def random_crop_and_normal(image_path, h=88, w=88):
     x = random.randint(1, width - w)
     crop = im[y:y+h, x:x+w]
     # return crop / 255.0
-	return crop
+    return crop
 
 
 def build_DataSet(dataFolder):
@@ -94,14 +94,16 @@ def build_DataSet(dataFolder):
 				image = random_crop_and_normal(filePath)
 				image = np.reshape(image, (1, image.shape[0]*image.shape[1]*image.shape[2]))
 				# visit
-				table = pd.read_table(filePath.replace('jpg','txt'), header=None)
+				table = pd.read_csv(filePath.replace('jpg','txt'), header=None, sep='\t')
 				visit = visit2array(table)
 				visit = np.reshape(visit, (1, visit.shape[0]*visit.shape[1]*visit.shape[2]))
 				# merge 88*88*3 + 7*26*24 = 27600  96*96*3 = 27648 相差48
+				image = np.append(image, [0]*48)
 				imiv = np.append(image, visit)
-				imiv = np.append(imiv, [0]*48)
-				imiv = np.reshape(imiv, (96, 96, 3))
+				# normalize
 				imiv = imiv / np.max(imiv)
+				# reshape
+				imiv = np.reshape(imiv, (96, 96, 3))
 				# save
 				filename = filePath.split(os.path.sep)[-1]
 				p = os.path.sep.join([dirPath, filename.replace('jpg', 'npy')])
