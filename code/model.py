@@ -20,7 +20,7 @@ class MultiModal(object):
         print(self.output_image)
         self.output_visit = self.visit_network(self.visit)
         print(self.output_visit)
-        self.output = tf.concat([self.output_image, self.output_visit], axis=1)
+        self.output = tf.concat([self.output_image*0.3, self.output_visit*0.7], axis=1)
         self.prediction = tf.layers.dense(self.output, units=9)
 
         self.loss = self.get_loss(self.prediction, self.one_hot)
@@ -37,7 +37,7 @@ class MultiModal(object):
             self.optimizer = tf.train.AdamOptimizer(1e-3).minimize(self.loss, global_step=self.global_step)
 
         self.merged = tf.summary.merge_all()
-        print("网络初始化成功")
+        print("[INFO] 网络初始化成功...")
 
     def conv2d(self, x, input_filters, output_filters, kernel, strides=1, padding="SAME"):
         with tf.name_scope('conv'):
@@ -75,8 +75,8 @@ class MultiModal(object):
                 res = self.residual(pool, [channel, channel//2, channel//2, channel*2], 1, with_shortcut=True)
             with tf.name_scope('stage3'):
                 res = self.residual(res, [channel*2, channel, channel, channel*4], 2, with_shortcut=True)
-            with tf.name_scope('stage4'):
-                res = self.residual(res, [channel*4, channel*2, channel*2, channel*8], 2, with_shortcut=True)
+            # with tf.name_scope('stage4'):
+                # res = self.residual(res, [channel*4, channel*2, channel*2, channel*8], 2, with_shortcut=True)
             # with tf.name_scope('stage5'):
             #     res = self.residual(res, [channel*8, channel*4, channel*4, channel*16], 2, with_shortcut=True)
                 pool = tf.nn.avg_pool(res, [1, 4, 4, 1], strides=[1, 1, 1, 1], padding='VALID')
@@ -97,11 +97,11 @@ class MultiModal(object):
                 res = self.residual(res, [channel*2, channel, channel, channel*4], 2, with_shortcut=True)
             with tf.name_scope('stage4'):
                 res = self.residual(res, [channel*4, channel*2, channel*2, channel*8], 2, with_shortcut=True)
-            # with tf.name_scope('stage5'):
-                # res = self.residual(res, [channel*8, channel*4, channel*4, channel*16], 2, with_shortcut=True)
-            # with tf.name_scope('stage6'):
-                # res = self.residual(res, [channel*16, channel*8, channel*8, channel*32], 2, with_shortcut=True)
-                pool = tf.nn.avg_pool(res, [1, 1, 4, 1], strides=[1, 1, 1, 1], padding='VALID')
+            with tf.name_scope('stage5'):
+                res = self.residual(res, [channel*8, channel*4, channel*4, channel*16], 2, with_shortcut=True)
+            with tf.name_scope('stage6'):
+                res = self.residual(res, [channel*16, channel*8, channel*8, channel*32], 2, with_shortcut=True)
+                pool = tf.nn.avg_pool(res, [1, 1, 2, 1], strides=[1, 1, 1, 1], padding='VALID')
             with tf.name_scope('fc'):
                 flatten = tf.layers.flatten(pool)
         return flatten
