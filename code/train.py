@@ -41,8 +41,6 @@ def read_and_decode_valid(filename):
     image = tf.decode_raw(features['data'], tf.uint8)
     image = tf.reshape(image, [100, 100, 3])
     image = tf.random_crop(image, [88, 88, 3])
-    image = tf.image.random_flip_left_right(image)
-    image = tf.image.random_flip_up_down(image)
     image = tf.cast(image, tf.float32)/255.0
 
     visit = tf.decode_raw(features['visit'], tf.float64)
