@@ -25,7 +25,7 @@ class MultiModal(object):
 
         self.loss = self.get_loss(self.prediction, self.one_hot)
 
-        self.batch_size = 512
+        self.batch_size = 64 # 512
         with tf.name_scope('correct_prediction'):
             correct_prediction = tf.equal(tf.argmax(self.prediction, 1), tf.argmax(self.one_hot, 1))
         with tf.name_scope('accuracy'):
@@ -79,7 +79,7 @@ class MultiModal(object):
                 # res = self.residual(res, [channel*4, channel*2, channel*2, channel*8], 2, with_shortcut=True)
             # with tf.name_scope('stage5'):
             #     res = self.residual(res, [channel*8, channel*4, channel*4, channel*16], 2, with_shortcut=True)
-                pool = tf.nn.avg_pool(res, [1, 4, 4, 1], strides=[1, 1, 1, 1], padding='VALID')
+                pool = tf.nn.avg_pool(res, [1, 6, 6, 1], strides=[1, 1, 1, 1], padding='VALID')
             with tf.name_scope('fc'):
                 flatten = tf.layers.flatten(pool)
         return flatten
