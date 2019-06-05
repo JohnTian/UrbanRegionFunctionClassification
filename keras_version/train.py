@@ -9,7 +9,7 @@ matplotlib.use("Agg")
 # import the necessary packages
 import keras
 from keras.preprocessing.image import ImageDataGenerator
-from keras.applications import VGG16
+from keras.applications import Xception
 from keras.layers.core import Dropout
 from keras.layers.core import Flatten
 from keras.layers.core import Dense
@@ -72,11 +72,15 @@ mean = np.array([123.68, 116.779, 103.939], dtype="float32")
 trainAug.mean = mean
 valAug.mean = mean
 
+HEIGHT = 88
+WIDTH = 88
+CHANNEL = 3
+TARGET_SIZE = (HEIGHT, WIDTH)
 # initialize the training generator
 trainGen = trainAug.flow_from_directory(
 	trainPath,
 	class_mode="categorical",
-	target_size=(224, 224),
+	target_size=TARGET_SIZE,
 	color_mode="rgb",
 	shuffle=True,
 	batch_size=config.BATCH_SIZE)
@@ -85,7 +89,7 @@ trainGen = trainAug.flow_from_directory(
 valGen = valAug.flow_from_directory(
 	valPath,
 	class_mode="categorical",
-	target_size=(224, 224),
+	target_size=TARGET_SIZE,
 	color_mode="rgb",
 	shuffle=False,
 	batch_size=config.BATCH_SIZE)
@@ -94,22 +98,21 @@ valGen = valAug.flow_from_directory(
 testGen = valAug.flow_from_directory(
 	testPath,
 	class_mode="categorical",
-	target_size=(224, 224),
+	target_size=TARGET_SIZE,
 	color_mode="rgb",
 	shuffle=False,
 	batch_size=config.BATCH_SIZE)
 
-# load the VGG16 network, ensuring the head FC layer sets are left
-# off
-baseModel = VGG16(weights="imagenet", include_top=False,
-	input_tensor=Input(shape=(224, 224, 3)))
+# load the base network, ensuring the head FC layer sets are left off
+baseModel = Xception(weights="imagenet", include_top=False,
+	input_tensor=Input(shape=(HEIGHT, WIDTH, CHANNEL)))
 
 # construct the head of the model that will be placed on top of the
 # the base model
 headModel = baseModel.output
 headModel = Flatten(name="flatten")(headModel)
-headModel = Dense(512, activation="relu")(headModel)
-headModel = Dropout(0.5)(headModel)
+headModel = Dense(128, activation="relu")(headModel)
+headModel = Dropout(0.25)(headModel)
 headModel = Dense(len(config.CLASSES), activation="softmax")(headModel)
 
 # place the head FC model on top of the base model (this will become
@@ -131,13 +134,20 @@ model.compile(loss="categorical_crossentropy", optimizer=opt,
 # train the head of the network for a few epochs (all other layers
 # are frozen) -- this will allow the new FC layers to start to become
 # initialized with actual "learned" values versus pure random
+callbacks = [
+    keras.callbacks.TensorBoard(
+        log_dir='log',
+        histogram_freq=0
+    )
+]
 print("[INFO] training head...")
 H = model.fit_generator(
 	trainGen,
 	steps_per_epoch=totalTrain // config.BATCH_SIZE,
 	validation_data=valGen,
 	validation_steps=totalVal // config.BATCH_SIZE,
-	epochs=50)
+	epochs=50,
+	callbacks=callbacks)
 
 # reset the testing generator and evaluate the network after
 # fine-tuning just the network head
@@ -149,50 +159,3 @@ predIdxs = np.argmax(predIdxs, axis=1)
 print(classification_report(testGen.classes, predIdxs,
 	target_names=testGen.class_indices.keys()))
 plot_training(H, 50, config.WARMUP_PLOT_PATH)
-
-# -------------------------------------------------------------------
-
-# reset our data generators
-trainGen.reset()
-valGen.reset()
-
-# now that the head FC layers have been trained/initialized, lets
-# unfreeze the final set of CONV layers and make them trainable
-for layer in baseModel.layers[15:]:
-	layer.trainable = True
-
-# loop over the layers in the model and show which ones are trainable
-# or not
-for layer in baseModel.layers:
-	print("{}: {}".format(layer, layer.trainable))
-
-# for the changes to the model to take affect we need to recompile
-# the model, this time using SGD with a *very* small learning rate
-print("[INFO] re-compiling model...")
-opt = SGD(lr=1e-4, momentum=0.9)
-model.compile(loss="categorical_crossentropy", optimizer=opt,
-	metrics=["accuracy"])
-
-# train the model again, this time fine-tuning *both* the final set
-# of CONV layers along with our set of FC layers
-H = model.fit_generator(
-	trainGen,
-	steps_per_epoch=totalTrain // config.BATCH_SIZE,
-	validation_data=valGen,
-	validation_steps=totalVal // config.BATCH_SIZE,
-	epochs=20)
-
-# reset the testing generator and then use our trained model to
-# make predictions on the data
-print("[INFO] evaluating after fine-tuning network...")
-testGen.reset()
-predIdxs = model.predict_generator(testGen,
-	steps=(totalTest // config.BATCH_SIZE) + 1)
-predIdxs = np.argmax(predIdxs, axis=1)
-print(classification_report(testGen.classes, predIdxs,
-	target_names=testGen.class_indices.keys()))
-plot_training(H, 20, config.UNFROZEN_PLOT_PATH)
-
-# serialize the model to disk
-print("[INFO] serializing network...")
-model.save(config.MODEL_PATH)
