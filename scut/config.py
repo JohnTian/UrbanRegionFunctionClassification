@@ -29,9 +29,16 @@ CLASSES = [
 ]
 
 # set the batch size
-BATCH_SIZE = 32
+BATCH_SIZE = 64
 
 # initialize the label encoder file path and the output directory to
 # where the extracted features (in CSV file format) will be stored
 LE_PATH = os.path.sep.join(["output", "le.cpickle"])
 BASE_CSV_PATH = "output"
+
+# set the path to the serialized model after training
+MODEL_PATH = os.path.sep.join(["output", "urbanRegion.model"])
+
+# define the path to the output training history plots
+UNFROZEN_PLOT_PATH = os.path.sep.join(["output", "unfrozen.png"])
+WARMUP_PLOT_PATH = os.path.sep.join(["output", "warmup.png"])
