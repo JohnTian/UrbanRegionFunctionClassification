@@ -49,7 +49,6 @@ def visit2array(table):
     return init
 
 
-
 def random_crop_and_normal(image_path, h=88, w=88):
     im = cv2.imread(image_path)
     height, width, _ = im.shape
@@ -90,24 +89,32 @@ def build_DataSet(dataFolder):
 			if not os.path.exists(dirPath):
 				os.makedirs(dirPath)
 			for filePath in filePaths:
-				# image
-				image = random_crop_and_normal(filePath)
-				image = np.reshape(image, (1, image.shape[0]*image.shape[1]*image.shape[2]))
-				# visit
-				table = pd.read_csv(filePath.replace('jpg','txt'), header=None, sep='\t')
-				visit = visit2array(table)
-				visit = np.reshape(visit, (1, visit.shape[0]*visit.shape[1]*visit.shape[2]))
-				# merge 88*88*3 + 7*26*24 = 27600  96*96*3 = 27648 相差48
-				image = np.append(image, [0]*48)
-				imiv = np.append(image, visit)
-				# normalize
-				imiv = imiv / np.max(imiv)
-				# reshape
-				imiv = np.reshape(imiv, (96, 96, 3))
-				# save
+				## just copy
 				filename = filePath.split(os.path.sep)[-1]
-				p = os.path.sep.join([dirPath, filename.replace('jpg', 'npy')])
-				np.save(p, imiv)
+				p = os.path.sep.join([dirPath, filename])
+				# copy image
+				shutil.copy2(filePath, p)
+				# copy txt
+				shutil.copy2(filePath.replace('jpg','txt'), p.replace('jpg', 'txt'))
+				# ## merge and normalize
+				# # image
+				# image = random_crop_and_normal(filePath)
+				# image = np.reshape(image, (1, image.shape[0]*image.shape[1]*image.shape[2]))
+				# # visit
+				# table = pd.read_csv(filePath.replace('jpg','txt'), header=None, sep='\t')
+				# visit = visit2array(table)
+				# visit = np.reshape(visit, (1, visit.shape[0]*visit.shape[1]*visit.shape[2]))
+				# # merge 88*88*3 + 7*26*24 = 27600  96*96*3 = 27648 相差48
+				# image = np.append(image, [0]*48)
+				# imiv = np.append(image, visit)
+				# # normalize
+				# imiv = imiv / np.max(imiv)
+				# # reshape
+				# imiv = np.reshape(imiv, (96, 96, 3))
+				# # save
+				# filename = filePath.split(os.path.sep)[-1]
+				# p = os.path.sep.join([dirPath, filename.replace('jpg', 'npy')])
+				# np.save(p, imiv)
 		print('[INFO] {} done!'.format(split))
 
 
