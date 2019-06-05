@@ -39,13 +39,6 @@ def plot_training(H, N, plotPath):
 	plt.savefig(plotPath)
 
 
-callbacks = [
-    keras.callbacks.TensorBoard(
-        log_dir='log',
-        histogram_freq=1
-    )
-]
-
 # derive the paths to the training, validation, and testing
 # directories
 trainPath = os.path.sep.join([config.BASE_PATH, config.TRAIN])
@@ -144,8 +137,7 @@ H = model.fit_generator(
 	steps_per_epoch=totalTrain // config.BATCH_SIZE,
 	validation_data=valGen,
 	validation_steps=totalVal // config.BATCH_SIZE,
-	epochs=50,
-    callbacks=callbacks)
+	epochs=50)
 
 # reset the testing generator and evaluate the network after
 # fine-tuning just the network head
@@ -188,8 +180,7 @@ H = model.fit_generator(
 	steps_per_epoch=totalTrain // config.BATCH_SIZE,
 	validation_data=valGen,
 	validation_steps=totalVal // config.BATCH_SIZE,
-	epochs=20,
-    callbacks=callbacks)
+	epochs=20)
 
 # reset the testing generator and then use our trained model to
 # make predictions on the data
