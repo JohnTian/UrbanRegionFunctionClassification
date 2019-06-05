@@ -12,4 +12,5 @@ tf_version/result/
 # keras_version
 keras_version/dataset/
 keras_version/UrbanRegionData/
+keras_version/output/
 keras_version/log/
