@@ -122,7 +122,6 @@ def build_visit_model(visit_input, filters=(16, 32, 64)):
     return visit_model
 
 
-
 def lr_schedule(epoch):
     """Learning Rate Schedule
 
@@ -146,6 +145,7 @@ def lr_schedule(epoch):
         lr *= 1e-1
     print('Learning rate: ', lr)
     return lr
+
 
 def train(nb_classes):
     ## Load data
