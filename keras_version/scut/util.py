@@ -36,7 +36,9 @@ def visit2arrayAndNormal(filePath):
             x, y = date2position[datestr2dateint[date]]
             for visit in visit_lst:
                 init[x][y][str2int[visit]] += 1
-    return init / np.max(init)
+    init = init / np.max(init)
+    init = np.transpose(init, [2, 1, 0]) # (7, 26, 24) --> (24, 26, 7)
+    return init
 
 
 def randomCropAndNormal(image_path, h=88, w=88):

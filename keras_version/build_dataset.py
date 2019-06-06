@@ -36,25 +36,32 @@ def build_DataSet(dataFolder):
 	for split, data in zip((config.TRAIN, config.TEST, config.VAL), (trainData, testData, validData)):
 		# grab all image paths in the current split
 		print("[INFO] processing '{} split'...".format(split))
+
 		for label, filePaths in data.items():
-			# construct the path to the output directory
-			dirPath = os.path.sep.join([config.BASE_PATH, split, label])
-			# if the output directory does not exist, create it
-			if not os.path.exists(dirPath):
-				os.makedirs(dirPath)
+			# construct the path to the output directory for image and visit
+			dirImagePath = os.path.sep.join([config.BASE_PATH, 'image', split, label])
+			dirVisitPath = os.path.sep.join([config.BASE_PATH, 'visit', split, label])
+			if not os.path.exists(dirImagePath):
+				os.makedirs(dirImagePath)
+			if not os.path.exists(dirVisitPath):
+				os.makedirs(dirVisitPath)
+
 			for filePath in filePaths:
 				# ## Method 1 just copy
 				# filename = filePath.split(os.path.sep)[-1]
-				# p = os.path.sep.join([dirPath, filename])
-				# shutil.copy2(filePath, p)
-				# shutil.copy2(filePath.replace('jpg','txt'), p.replace('jpg', 'txt'))
+				# pImagePath = os.path.sep.join([dirImagePath, filename])
+				# shutil.copy2(filePath, pImagePath)
+				# pVisitPath = os.path.sep.join([dirVisitPath, filename.replace('jpg', 'npy')])
+				# shutil.copy2(filePath.replace('jpg','txt'), pVisitPath)
 
 				## Method 2 copy and visit2array
 				filename = filePath.split(os.path.sep)[-1]
-				p = os.path.sep.join([dirPath, filename])
-				shutil.copy2(filePath, p)
+				pImagePath = os.path.sep.join([dirImagePath, filename])
+				shutil.copy2(filePath, pImagePath)
+
 				visit = visit2arrayAndNormal(filePath.replace('jpg','txt'))
-				np.save(p.replace('jpg', 'npy'), visit)
+				pVisitPath = os.path.sep.join([dirVisitPath, filename.replace('jpg', 'npy')])
+				np.save(pVisitPath, visit)
 
 				# ## Method 3 merge and normalize
 				# # image
