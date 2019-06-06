@@ -73,7 +73,7 @@ def create_visit_gen(HEIGHT, WIDTH, CHANNEL):
     trainVisitPath = os.path.sep.join([config.BASE_PATH, config.BASE_VISIT_TYPE, config.TRAIN])
     validVisitPath = os.path.sep.join([config.BASE_PATH, config.BASE_VISIT_TYPE, config.VAL])
     testVisitPath = os.path.sep.join([config.BASE_PATH, config.BASE_VISIT_TYPE, config.TEST])
-    
+
     return trainVisitGen, valVisitGen, testVisitGen
 
 
@@ -89,7 +89,8 @@ def load_data(filesPath, exts=('.jpg')):
             datas.append(im)
         elif 'npy' in exts:
             da = np.load(fPath)
-            datas.append(da)
+            elm = np.pad(da, ((4,4), (3,3), (0,0)), mode='constant', constant_values=0) # 24x26x7 --> 32x32x7
+            datas.append(elm)
         else:
             print('{}'.format(fPath))
     datas = np.array(datas)
@@ -112,7 +113,7 @@ def load_visit_data():
     trainVisitPath = os.path.sep.join([config.BASE_PATH, config.BASE_VISIT_TYPE, config.TRAIN])
     validVisitPath = os.path.sep.join([config.BASE_PATH, config.BASE_VISIT_TYPE, config.VAL])
     testVisitPath = os.path.sep.join([config.BASE_PATH, config.BASE_VISIT_TYPE, config.TEST])
-    trainVisitData, trainVisitLabel = load_data(trainVisitPath)
-    validVisitData, validVisitLabel = load_data(validVisitPath)
-    testVisitData, testVisitLabel = load_data(testVisitPath)
+    trainVisitData, trainVisitLabel = load_data(trainVisitPath, exts=('.npy'))
+    validVisitData, validVisitLabel = load_data(validVisitPath, exts=('.npy'))
+    testVisitData, testVisitLabel = load_data(testVisitPath, exts=('.npy'))
     return (trainVisitData, trainVisitLabel), (validVisitData, validVisitLabel), (testVisitData, testVisitLabel)
