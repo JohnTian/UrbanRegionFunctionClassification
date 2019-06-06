@@ -52,8 +52,7 @@ print("[INFO] config callbacks ...")
 save_dir = config.MODEL_PATH
 if not os.path.isdir(save_dir):
 	os.makedirs(save_dir)
-model_name = 'urbanRegion_%s_model.h5'
-filepath = os.path.join(save_dir, model_name)
+filepath = os.path.join(save_dir, config.MODEL_NAME)
 # Prepare callbacks for model saving and for learning rate adjustment.
 checkpoint = keras.callbacks.ModelCheckpoint(
 	filepath=filepath,

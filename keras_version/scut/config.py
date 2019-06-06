@@ -36,4 +36,5 @@ EPOCH = 200
 
 # set the path to the serialized model after training
 MODEL_PATH = "saved_models"
+MODEL_NAME = "urbanRegion.h5"
 WARMUP_PLOT_PATH = os.path.sep.join([MODEL_PATH, "warmup.png"])
