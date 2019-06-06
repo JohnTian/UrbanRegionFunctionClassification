@@ -1,5 +1,6 @@
 # -*- encoding:utf-8 -*-
 # USAGE: python train.py
+import os
 import keras
 import numpy as np
 from scut import config
@@ -19,6 +20,10 @@ totalTrain = trainImageLabel.shape[0]
 totalVal = validImageLabel.shape[0]
 totalTest = testImageLabel.shape[0]
 
+print(trainImageData.shape, trainVisitData.shape, trainImageLabel.shape, trainVisitLabel.shape)
+print(validImageData.shape, validVisitData.shape, validImageLabel.shape, validVisitLabel.shape)
+print(testImageData.shape, testVisitData.shape, testImageLabel.shape, testVisitLabel.shape)
+
 # Convert class vectors to binary class matrices.
 num_classes = 9
 trainY = keras.utils.to_categorical(trainImageLabel, num_classes)
@@ -27,8 +32,8 @@ testY = keras.utils.to_categorical(testImageLabel, num_classes)
 
 print("[INFO] building model ...")
 imageModel = create_image_model(100, 100, 3)
-visitModel = create_visit_model(26, 24, 7)
-combinedInput = concatenate([imageModel.output, visitModel.output])
+visitModel = create_visit_model(32, 32, 7)
+combinedInput = keras.layers.concatenate([imageModel.output, visitModel.output])
 x = Dense(16, activation="relu")(combinedInput)
 x = Dense(9, activation="softmax")(x)
 model = Model(inputs=[imageModel.input, visitModel.input], outputs=x)
@@ -64,21 +69,30 @@ callbacks = [
 	lr_scheduler,
 	keras.callbacks.TensorBoard(
         log_dir='log',
-        histogram_freq=0
+        histogram_freq=1
     )
 ]
 
 print("[INFO] training model ...")
-H = model.fit(
-	[trainImageData, trainVisitData],
-	trainY,
+EPOCH = 200
+model.fit(
+        [trainImageData, trainVisitData],
+        trainY,
 	steps_per_epoch=totalTrain // config.BATCH_SIZE,
-	validation_data=([validImageData, validVisitData], validY),
-	validation_steps=totalVal // config.BATCH_SIZE,
-	epochs=50,
-	callbacks=callbacks)
+        epochs=EPOCH,
+        validation_data=([validImageData,validVisitData], validY),
+        validation_steps=totalVal // config.BATCH_SIZE,
+        shuffle=True,
+        callbacks=callbacks)
 
-print("[INFO] evaluating after fine-tuning model ...")
+print("[INFO] evaluating model by evaluate ...")
+# Score trained model.
+scores = model.evaluate([testImageData, testVisitData], testY, verbose=1)
+print('Test loss:', scores[0])
+print('Test accuracy:', scores[1])
+
+
+print("[INFO] evaluating model by predict ...")
 predIdxs = model.predict(
 	[testImageData, testVisitData],
 	steps=(totalTest // config.BATCH_SIZE) + 1
