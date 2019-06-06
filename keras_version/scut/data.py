@@ -127,7 +127,7 @@ def create_data_gen(imagePath, visitPath, mode='train', bs=BATCH_SIZE, numClasse
         imageData = []
         visitData = []
         labels = []
-        while(len(labels)<bs):
+        while len(labels)<bs:
             try:
                 iPath = next(imageIt)
                 imageData.append(cv2.imread(iPath))
@@ -141,8 +141,8 @@ def create_data_gen(imagePath, visitPath, mode='train', bs=BATCH_SIZE, numClasse
                 elm = np.pad(da, ((4,4), (3,3), (0,0)), mode='constant', constant_values=0) # 32x32x7
                 visitData.append(elm)
             except StopIteration:
-                if mode in ('valid', 'test'):
-                    break
                 imageIt = iter(imageFiles)
                 visitIt = iter(visitFiles)
+                if mode != 'train':
+                    break
         yield ([np.array(imageData), np.array(visitData)], np.array(labels))

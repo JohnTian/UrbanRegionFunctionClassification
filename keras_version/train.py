@@ -35,6 +35,8 @@ trainGen = create_data_gen(trainImagePath, trainVisitPath, 'train')
 validGen = create_data_gen(validImagePath, validVisitPath, 'valid')
 testGen = create_data_gen(testImagePath, testVisitPath, 'test')
 
+print('[INFO] totalTrain {}, totalVal {}, totalTest {}'.format(totalTrain, totalVal, totalTest))
+
 print("[INFO] building model ...")
 imageModel = create_image_model(100, 100, 3)
 visitModel = create_visit_model(32, 32, 7)
