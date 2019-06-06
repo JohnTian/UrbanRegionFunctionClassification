@@ -107,7 +107,6 @@ def load_image_data():
     testImageData, testImageLabel = load_data(testImagePath)
     return (trainImageData, trainImageLabel), (validImageData, validImageLabel), (testImageData, testImageLabel)
 
-
 def load_visit_data():
     # derive the paths to the training, validation, and testing directories
     trainVisitPath = os.path.sep.join([config.BASE_PATH, config.BASE_VISIT_TYPE, config.TRAIN])
@@ -117,3 +116,36 @@ def load_visit_data():
     validVisitData, validVisitLabel = load_data(validVisitPath, exts=('.npy'))
     testVisitData, testVisitLabel = load_data(testVisitPath, exts=('.npy'))
     return (trainVisitData, trainVisitLabel), (validVisitData, validVisitLabel), (testVisitData, testVisitLabel)
+
+
+def create_data_gen(imagePath, visitPath, mode='train', bs=config.BATCH_SIZE, numClasses=len(config.CLASSES)):
+    imageFiles = paths.list_files(imagePath, validExts=('.jpg'))
+    visitFiles = paths.list_files(visitPath, validExts=('.npy'))
+    imageIt = iter(imageFiles)
+    visitIt = iter(visitFiles)
+    while True:
+        imageData = []
+        visitData = []
+        labels = []
+        while(len(labels)<bs):
+            try:
+                iPath = next(imageIt)
+                imageData.append(cv2.imread(iPath))
+                l = iPath.split(os.path.sep)[-2]
+                label = config.CLASSES.index(l)
+                label = keras.utils.to_categorical(label, num_classes=numClasses)
+                labels.append(label)
+
+                vPath = next(visitIt)
+                da = np.load(fPath) # 24x26x7
+                elm = np.pad(da, ((4,4), (3,3), (0,0)), mode='constant', constant_values=0) # 32x32x7
+                visitData.append(elm)
+            except StopIteration:
+                imageIt = iter(imageFiles)
+                visitIt = iter(visitFiles)
+                if mode in ('valid', 'test'):
+                    break
+            imageData = np.array(imageData)
+            visitData = np.array(visitData)
+            labels = np.array(labels)
+        yield ([imageData, visitData], labels)
