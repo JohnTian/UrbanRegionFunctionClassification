@@ -83,7 +83,7 @@ def load_data(filesPath, exts=('.jpg')):
     label = []
     for fPath in files:
         l = fPath.split(os.path.sep)[-2]
-        label.append(l)
+        label.append(config.CLASSES.index(l))
         if 'jpg' in exts:
             im = cv2.imread(fPath)
             datas.append(im)
@@ -92,7 +92,10 @@ def load_data(filesPath, exts=('.jpg')):
             datas.append(da)
         else:
             print('{}'.format(fPath))
-    return np.array(datas), np.array(label)
+    datas = np.array(datas)
+    label = np.array(label)
+    label = np.expand_dims(label, axis=1)
+    return datas, label
 
 def load_image_data():
     trainImagePath = os.path.sep.join([config.BASE_PATH, config.BASE_IMAGE_TYPE, config.TRAIN])
