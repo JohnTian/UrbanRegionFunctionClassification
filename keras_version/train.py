@@ -73,7 +73,7 @@ callbacks = [
 	lr_scheduler,
 	keras.callbacks.TensorBoard(
         log_dir='log',
-        histogram_freq=1
+        histogram_freq=0
     )
 ]
 

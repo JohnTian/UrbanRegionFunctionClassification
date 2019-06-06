@@ -141,8 +141,8 @@ def create_data_gen(imagePath, visitPath, mode='train', bs=config.BATCH_SIZE, nu
                 elm = np.pad(da, ((4,4), (3,3), (0,0)), mode='constant', constant_values=0) # 32x32x7
                 visitData.append(elm)
             except StopIteration:
-                imageIt = iter(imageFiles)
-                visitIt = iter(visitFiles)
                 if mode in ('valid', 'test'):
                     break
+                imageIt = iter(imageFiles)
+                visitIt = iter(visitFiles)
         yield ([np.array(imageData), np.array(visitData)], np.array(labels))
