@@ -74,12 +74,11 @@ callbacks = [
 ]
 
 print("[INFO] training model ...")
-EPOCH = 200
 model.fit(
         [trainImageData, trainVisitData],
         trainY,
 	steps_per_epoch=totalTrain // config.BATCH_SIZE,
-        epochs=EPOCH,
+        epochs=config.EPOCH,
         validation_data=([validImageData,validVisitData], validY),
         validation_steps=totalVal // config.BATCH_SIZE,
         shuffle=True,
