@@ -2,6 +2,7 @@
 import keras
 import numpy as np
 from scut import config
+from resnet import create_resnet
 from keras.models import Model
 from keras.layers import Input
 from keras.layers.core import Dense

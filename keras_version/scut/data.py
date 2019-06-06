@@ -1,5 +1,6 @@
 # -*- encoding:utf-8 -*-
 import os
+import cv2
 import keras
 import pickle
 import numpy as np
@@ -13,10 +14,6 @@ def create_image_gen(HEIGHT, WIDTH, CHANNEL):
     trainImagePath = os.path.sep.join([config.BASE_PATH, config.BASE_IMAGE_TYPE, config.TRAIN])
     validImagePath = os.path.sep.join([config.BASE_PATH, config.BASE_IMAGE_TYPE, config.VAL])
     testImagePath = os.path.sep.join([config.BASE_PATH, config.BASE_IMAGE_TYPE, config.TEST])
-
-    trainVisitPath = os.path.sep.join([config.BASE_PATH, config.BASE_VISIT_TYPE, config.TRAIN])
-    validVisitPath = os.path.sep.join([config.BASE_PATH, config.BASE_VISIT_TYPE, config.VAL])
-    testVisitPath = os.path.sep.join([config.BASE_PATH, config.BASE_VISIT_TYPE, config.TEST])
 
     # determine the total number of image paths in training, validation and testing directories
     totalTrain = len(list(paths.list_images(trainImagePath)))
@@ -68,7 +65,51 @@ def create_image_gen(HEIGHT, WIDTH, CHANNEL):
         color_mode="rgb",
         shuffle=False,
         batch_size=config.BATCH_SIZE)
-    return trainImageAug, valImageGen, testImageGen
+    return (trainImageGen, valImageGen, testImageGen), (totalTrain, totalVal, totalTest)
+
 
 def create_visit_gen(HEIGHT, WIDTH, CHANNEL):
-    return trainVistAug, valVisitGen, testVisitGen
+    # derive the paths to the training, validation, and testing directories
+    trainVisitPath = os.path.sep.join([config.BASE_PATH, config.BASE_VISIT_TYPE, config.TRAIN])
+    validVisitPath = os.path.sep.join([config.BASE_PATH, config.BASE_VISIT_TYPE, config.VAL])
+    testVisitPath = os.path.sep.join([config.BASE_PATH, config.BASE_VISIT_TYPE, config.TEST])
+    
+    return trainVisitGen, valVisitGen, testVisitGen
+
+
+def load_data(filesPath, exts=('.jpg')):
+    files = paths.list_files(filesPath, validExts=exts)
+    datas = []
+    label = []
+    for fPath in files:
+        l = fPath.split(os.path.sep)[-2]
+        label.append(l)
+        if 'jpg' in exts:
+            im = cv2.imread(fPath)
+            datas.append(im)
+        elif 'npy' in exts:
+            da = np.load(fPath)
+            datas.append(da)
+        else:
+            print('{}'.format(fPath))
+    return np.array(datas), np.array(label)
+
+def load_image_data():
+    trainImagePath = os.path.sep.join([config.BASE_PATH, config.BASE_IMAGE_TYPE, config.TRAIN])
+    validImagePath = os.path.sep.join([config.BASE_PATH, config.BASE_IMAGE_TYPE, config.VAL])
+    testImagePath = os.path.sep.join([config.BASE_PATH, config.BASE_IMAGE_TYPE, config.TEST])
+    trainImageData, trainImageLabel = load_data(trainImagePath)
+    validImageData, validImageLabel = load_data(validImagePath)
+    testImageData, testImageLabel = load_data(testImagePath)
+    return (trainImageData, trainImageLabel), (validImageData, validImageLabel), (testImageData, testImageLabel)
+
+
+def load_visit_data():
+    # derive the paths to the training, validation, and testing directories
+    trainVisitPath = os.path.sep.join([config.BASE_PATH, config.BASE_VISIT_TYPE, config.TRAIN])
+    validVisitPath = os.path.sep.join([config.BASE_PATH, config.BASE_VISIT_TYPE, config.VAL])
+    testVisitPath = os.path.sep.join([config.BASE_PATH, config.BASE_VISIT_TYPE, config.TEST])
+    trainVisitData, trainVisitLabel = load_data(trainVisitPath)
+    validVisitData, validVisitLabel = load_data(validVisitPath)
+    testVisitData, testVisitLabel = load_data(testVisitPath)
+    return (trainVisitData, trainVisitLabel), (validVisitData, validVisitLabel), (testVisitData, testVisitLabel)
