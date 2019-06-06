@@ -1,6 +1,5 @@
 # -*- encoding:utf-8 -*-
 # USAGE: python build_dataset.py
-# import the necessary packages
 import os
 import shutil
 import random
@@ -39,8 +38,8 @@ def build_DataSet(dataFolder):
 
 		for label, filePaths in data.items():
 			# construct the path to the output directory for image and visit
-			dirImagePath = os.path.sep.join([config.BASE_PATH, 'image', split, label])
-			dirVisitPath = os.path.sep.join([config.BASE_PATH, 'visit', split, label])
+			dirImagePath = os.path.sep.join([config.BASE_PATH, config.BASE_IMAGE_TYPE, split, label])
+			dirVisitPath = os.path.sep.join([config.BASE_PATH, config.BASE_VISIT_TYPE, split, label])
 			if not os.path.exists(dirImagePath):
 				os.makedirs(dirImagePath)
 			if not os.path.exists(dirVisitPath):
