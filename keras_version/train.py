@@ -5,7 +5,7 @@ import numpy as np
 from scut import config
 from scut.util import plot_training
 from scut.data import create_image_gen, create_visit_gen, load_image_data, load_visit_data
-from scut.models import creat_image_model, create_visit_model, lr_schedule
+from scut.models import create_image_model, create_visit_model, lr_schedule
 from keras.models import Model
 from keras.optimizers import SGD
 from keras.layers.core import Dense
@@ -26,7 +26,7 @@ validY = keras.utils.to_categorical(validImageLabel, num_classes)
 testY = keras.utils.to_categorical(testImageLabel, num_classes)
 
 print("[INFO] building model ...")
-imageModel = creat_image_model(100, 100, 3)
+imageModel = create_image_model(100, 100, 3)
 visitModel = create_visit_model(26, 24, 7)
 combinedInput = concatenate([imageModel.output, visitModel.output])
 x = Dense(16, activation="relu")(combinedInput)
