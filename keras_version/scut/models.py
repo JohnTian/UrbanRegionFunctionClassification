@@ -2,7 +2,7 @@
 import keras
 import numpy as np
 from scut import config
-from resnet import create_resnet
+from .resnet import create_resnet
 from keras.models import Model
 from keras.layers import Input
 from keras.layers.core import Dense
@@ -59,22 +59,4 @@ def create_image_model(HEIGHT, WIDTH, CHANNEL):
 
 
 def create_visit_model(HEIGHT, WIDTH, CHANNEL):
-    # load the base network, ensuring the head FC layer sets are left off
-    baseModel = VGG16(weights="imagenet", include_top=False, input_tensor=Input(shape=(HEIGHT, WIDTH, CHANNEL)))
-
-    # construct the head of the model that will be placed on top of the the base model
-    headModel = baseModel.output
-    headModel = Flatten(name="flatten")(headModel)
-    headModel = Dense(512, activation="relu")(headModel)
-    headModel = Dropout(0.5)(headModel)
-    headModel = Dense(len(config.CLASSES), activation="softmax")(headModel)
-
-    # place the head FC model on top of the base model (this will become
-    # the actual model we will train)
-    model = Model(inputs=baseModel.input, outputs=headModel)
-
-    # loop over all layers in the base model and freeze them so they will
-    # *not* be updated during the first training process
-    for layer in baseModel.layers:
-        layer.trainable = False
-    return model
+    return create_resnet((HEIGHT, WIDTH, CHANNEL))
