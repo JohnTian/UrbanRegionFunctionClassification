@@ -3,9 +3,10 @@
 import os
 import keras
 import numpy as np
+from imutils import paths
 from scut import config
 from scut.util import plot_training
-from scut.data import create_image_gen, create_visit_gen, load_image_data, load_visit_data
+from scut.data import create_data_gen
 from scut.models import create_image_model, create_visit_model, lr_schedule
 from keras.models import Model
 from keras.optimizers import SGD
@@ -14,21 +15,24 @@ from sklearn.metrics import classification_report
 
 
 print("[INFO] loading data ...")
-(trainImageData, trainImageLabel), (validImageData, validImageLabel), (testImageData, testImageLabel) = load_image_data()
-(trainVisitData, trainVisitLabel), (validVisitData, validVisitLabel), (testVisitData, testVisitLabel) = load_visit_data()
-totalTrain = trainImageLabel.shape[0]
-totalVal = validImageLabel.shape[0]
-totalTest = testImageLabel.shape[0]
+trainImagePath = os.path.sep.join([config.BASE_PATH, config.BASE_IMAGE_TYPE, config.TRAIN])
+validImagePath = os.path.sep.join([config.BASE_PATH, config.BASE_IMAGE_TYPE, config.VAL])
+testImagePath = os.path.sep.join([config.BASE_PATH, config.BASE_IMAGE_TYPE, config.TEST])
 
-print(trainImageData.shape, trainVisitData.shape, trainImageLabel.shape, trainVisitLabel.shape)
-print(validImageData.shape, validVisitData.shape, validImageLabel.shape, validVisitLabel.shape)
-print(testImageData.shape, testVisitData.shape, testImageLabel.shape, testVisitLabel.shape)
+trainVisitPath = os.path.sep.join([config.BASE_PATH, config.BASE_VISIT_TYPE, config.TRAIN])
+validVisitPath = os.path.sep.join([config.BASE_PATH, config.BASE_VISIT_TYPE, config.VAL])
+testVisitPath = os.path.sep.join([config.BASE_PATH, config.BASE_VISIT_TYPE, config.TEST])
 
-# Convert class vectors to binary class matrices.
-num_classes = 9
-trainY = keras.utils.to_categorical(trainImageLabel, num_classes)
-validY = keras.utils.to_categorical(validImageLabel, num_classes)
-testY = keras.utils.to_categorical(testImageLabel, num_classes)
+totalTrain = len(paths.list_images(trainImagePath))
+totalVal = len(paths.list_images(validImagePath))
+
+testLabels = [config.CLASSES.index(line.split(os.path.sep)[-2]) for line in testLabels]
+testNames = [line.split(os.path.sep)[-2] for line in testLabels]
+totalTest = len(testLabels)
+
+trainGen = create_data_gen(trainImagePath, trainVisitPath, 'train')
+validGen = create_data_gen(validImagePath, validVisitPath, 'valid')
+testGen = create_data_gen(testImagePath, testVisitPath, 'test')
 
 print("[INFO] building model ...")
 imageModel = create_image_model(100, 100, 3)
@@ -74,34 +78,25 @@ callbacks = [
 ]
 
 print("[INFO] training model ...")
-model.fit(
-        [trainImageData, trainVisitData],
-        trainY,
-	steps_per_epoch=totalTrain // config.BATCH_SIZE,
-        epochs=config.EPOCH,
-        validation_data=([validImageData,validVisitData], validY),
+model.fit_generator(
+        trainGen,
+	    steps_per_epoch=totalTrain // config.BATCH_SIZE,
+        validation_data=validGen,
         validation_steps=totalVal // config.BATCH_SIZE,
-        shuffle=True,
+        epochs=config.EPOCH,
         callbacks=callbacks)
 
-print("[INFO] evaluating model by evaluate ...")
-# Score trained model.
-scores = model.evaluate([testImageData, testVisitData], testY, verbose=1)
-print('Test loss:', scores[0])
-print('Test accuracy:', scores[1])
-
-
 print("[INFO] evaluating model by predict ...")
-predIdxs = model.predict(
-	[testImageData, testVisitData],
+predIdxs = model.predict_generator(
+	testGen,
 	steps=(totalTest // config.BATCH_SIZE) + 1
 )
 predIdxs = np.argmax(predIdxs, axis=1)
 print(
 	classification_report(
-		testY,
+		testLabels,
 		predIdxs,
-		target_names=testImageLabel
+		target_names=testNames
 	)
 )
 
