@@ -4,16 +4,17 @@ import cv2
 import keras
 import pickle
 import numpy as np
-from scut import config
+from .config import BASE_PATH, BASE_IMAGE_TYPE, BASE_VISIT_TYPE
+from .config import TRAIN, VAL, TEST, BATCH_SIZE, CLASSES
 from imutils import paths
 from keras.preprocessing.image import ImageDataGenerator
 
 
 def create_image_gen(HEIGHT, WIDTH, CHANNEL):
     # derive the paths to the training, validation, and testing directories
-    trainImagePath = os.path.sep.join([config.BASE_PATH, config.BASE_IMAGE_TYPE, config.TRAIN])
-    validImagePath = os.path.sep.join([config.BASE_PATH, config.BASE_IMAGE_TYPE, config.VAL])
-    testImagePath = os.path.sep.join([config.BASE_PATH, config.BASE_IMAGE_TYPE, config.TEST])
+    trainImagePath = os.path.sep.join([BASE_PATH, BASE_IMAGE_TYPE, TRAIN])
+    validImagePath = os.path.sep.join([BASE_PATH, BASE_IMAGE_TYPE, VAL])
+    testImagePath = os.path.sep.join([BASE_PATH, BASE_IMAGE_TYPE, TEST])
 
     # determine the total number of image paths in training, validation and testing directories
     totalTrain = len(list(paths.list_images(trainImagePath)))
@@ -46,7 +47,7 @@ def create_image_gen(HEIGHT, WIDTH, CHANNEL):
         target_size=TARGET_SIZE,
         color_mode="rgb",
         shuffle=True,
-        batch_size=config.BATCH_SIZE)
+        batch_size=BATCH_SIZE)
 
     # initialize the validation generator
     valImageGen = valImageAug.flow_from_directory(
@@ -55,7 +56,7 @@ def create_image_gen(HEIGHT, WIDTH, CHANNEL):
         target_size=TARGET_SIZE,
         color_mode="rgb",
         shuffle=False,
-        batch_size=config.BATCH_SIZE)
+        batch_size=BATCH_SIZE)
 
     # initialize the testing generator
     testImageGen = valImageAug.flow_from_directory(
@@ -64,15 +65,14 @@ def create_image_gen(HEIGHT, WIDTH, CHANNEL):
         target_size=TARGET_SIZE,
         color_mode="rgb",
         shuffle=False,
-        batch_size=config.BATCH_SIZE)
+        batch_size=BATCH_SIZE)
     return (trainImageGen, valImageGen, testImageGen), (totalTrain, totalVal, totalTest)
-
 
 def create_visit_gen(HEIGHT, WIDTH, CHANNEL):
     # derive the paths to the training, validation, and testing directories
-    trainVisitPath = os.path.sep.join([config.BASE_PATH, config.BASE_VISIT_TYPE, config.TRAIN])
-    validVisitPath = os.path.sep.join([config.BASE_PATH, config.BASE_VISIT_TYPE, config.VAL])
-    testVisitPath = os.path.sep.join([config.BASE_PATH, config.BASE_VISIT_TYPE, config.TEST])
+    trainVisitPath = os.path.sep.join([BASE_PATH, BASE_VISIT_TYPE, TRAIN])
+    validVisitPath = os.path.sep.join([BASE_PATH, BASE_VISIT_TYPE, VAL])
+    testVisitPath = os.path.sep.join([BASE_PATH, BASE_VISIT_TYPE, TEST])
 
     return trainVisitGen, valVisitGen, testVisitGen
 
@@ -83,7 +83,7 @@ def load_data(filesPath, exts=('.jpg')):
     label = []
     for fPath in files:
         l = fPath.split(os.path.sep)[-2]
-        label.append(config.CLASSES.index(l))
+        label.append(CLASSES.index(l))
         if 'jpg' in exts:
             im = cv2.imread(fPath)
             datas.append(im)
@@ -99,9 +99,9 @@ def load_data(filesPath, exts=('.jpg')):
     return datas, label
 
 def load_image_data():
-    trainImagePath = os.path.sep.join([config.BASE_PATH, config.BASE_IMAGE_TYPE, config.TRAIN])
-    validImagePath = os.path.sep.join([config.BASE_PATH, config.BASE_IMAGE_TYPE, config.VAL])
-    testImagePath = os.path.sep.join([config.BASE_PATH, config.BASE_IMAGE_TYPE, config.TEST])
+    trainImagePath = os.path.sep.join([BASE_PATH, BASE_IMAGE_TYPE, TRAIN])
+    validImagePath = os.path.sep.join([BASE_PATH, BASE_IMAGE_TYPE, VAL])
+    testImagePath = os.path.sep.join([BASE_PATH, BASE_IMAGE_TYPE, TEST])
     trainImageData, trainImageLabel = load_data(trainImagePath)
     validImageData, validImageLabel = load_data(validImagePath)
     testImageData, testImageLabel = load_data(testImagePath)
@@ -109,16 +109,16 @@ def load_image_data():
 
 def load_visit_data():
     # derive the paths to the training, validation, and testing directories
-    trainVisitPath = os.path.sep.join([config.BASE_PATH, config.BASE_VISIT_TYPE, config.TRAIN])
-    validVisitPath = os.path.sep.join([config.BASE_PATH, config.BASE_VISIT_TYPE, config.VAL])
-    testVisitPath = os.path.sep.join([config.BASE_PATH, config.BASE_VISIT_TYPE, config.TEST])
+    trainVisitPath = os.path.sep.join([BASE_PATH, BASE_VISIT_TYPE, TRAIN])
+    validVisitPath = os.path.sep.join([BASE_PATH, BASE_VISIT_TYPE, VAL])
+    testVisitPath = os.path.sep.join([BASE_PATH, BASE_VISIT_TYPE, TEST])
     trainVisitData, trainVisitLabel = load_data(trainVisitPath, exts=('.npy'))
     validVisitData, validVisitLabel = load_data(validVisitPath, exts=('.npy'))
     testVisitData, testVisitLabel = load_data(testVisitPath, exts=('.npy'))
     return (trainVisitData, trainVisitLabel), (validVisitData, validVisitLabel), (testVisitData, testVisitLabel)
 
 
-def create_data_gen(imagePath, visitPath, mode='train', bs=config.BATCH_SIZE, numClasses=len(config.CLASSES)):
+def create_data_gen(imagePath, visitPath, mode='train', bs=BATCH_SIZE, numClasses=len(CLASSES)):
     imageFiles = paths.list_files(imagePath, validExts=('.jpg'))
     visitFiles = paths.list_files(visitPath, validExts=('.npy'))
     imageIt = iter(imageFiles)
@@ -132,7 +132,7 @@ def create_data_gen(imagePath, visitPath, mode='train', bs=config.BATCH_SIZE, nu
                 iPath = next(imageIt)
                 imageData.append(cv2.imread(iPath))
                 l = iPath.split(os.path.sep)[-2]
-                label = config.CLASSES.index(l)
+                label = CLASSES.index(l)
                 label = keras.utils.to_categorical(label, num_classes=numClasses)
                 labels.append(label)
 
