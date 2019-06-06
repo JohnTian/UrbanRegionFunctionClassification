@@ -137,7 +137,7 @@ def create_data_gen(imagePath, visitPath, mode='train', bs=config.BATCH_SIZE, nu
                 labels.append(label)
 
                 vPath = next(visitIt)
-                da = np.load(fPath) # 24x26x7
+                da = np.load(vPath) # 24x26x7
                 elm = np.pad(da, ((4,4), (3,3), (0,0)), mode='constant', constant_values=0) # 32x32x7
                 visitData.append(elm)
             except StopIteration:
@@ -145,7 +145,4 @@ def create_data_gen(imagePath, visitPath, mode='train', bs=config.BATCH_SIZE, nu
                 visitIt = iter(visitFiles)
                 if mode in ('valid', 'test'):
                     break
-            imageData = np.array(imageData)
-            visitData = np.array(visitData)
-            labels = np.array(labels)
-        yield ([imageData, visitData], labels)
+        yield ([np.array(imageData), np.array(visitData)], np.array(labels))

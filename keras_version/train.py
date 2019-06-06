@@ -23,11 +23,12 @@ trainVisitPath = os.path.sep.join([config.BASE_PATH, config.BASE_VISIT_TYPE, con
 validVisitPath = os.path.sep.join([config.BASE_PATH, config.BASE_VISIT_TYPE, config.VAL])
 testVisitPath = os.path.sep.join([config.BASE_PATH, config.BASE_VISIT_TYPE, config.TEST])
 
-totalTrain = len(paths.list_images(trainImagePath))
-totalVal = len(paths.list_images(validImagePath))
+totalTrain = len(list(paths.list_images(trainImagePath)))
+totalVal = len(list(paths.list_images(validImagePath)))
 
-testLabels = [config.CLASSES.index(line.split(os.path.sep)[-2]) for line in testLabels]
-testNames = [line.split(os.path.sep)[-2] for line in testLabels]
+testFiles = list(paths.list_images(testImagePath))
+testLabels = [config.CLASSES.index(line.split(os.path.sep)[-2]) for line in testFiles]
+testNames = [line.split(os.path.sep)[-2] for line in testFiles]
 totalTest = len(testLabels)
 
 trainGen = create_data_gen(trainImagePath, trainVisitPath, 'train')
