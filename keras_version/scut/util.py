@@ -2,12 +2,13 @@
 # set the matplotlib backend so figures can be saved in the background
 import matplotlib
 matplotlib.use("Agg")
-
+import os
 import cv2
 import random
 import datetime
 import numpy as np
 import pandas as pd
+from imutils import paths
 import matplotlib.pyplot as plt
 
 
@@ -69,3 +70,15 @@ def randomCropAndNormal(image_path, h=88, w=88):
     x = random.randint(1, width - w)
     crop = im[y:y+h, x:x+w]
     return crop / 255.0
+
+def save2txt(pathOfData, validExts, pathOfSaveTxt):
+    """
+    save path of data to txt file.
+    """
+    filePaths = paths.list_files(pathOfData, validExts=validExts)
+    if os.path.exists(pathOfSaveTxt):
+        os.remove(pathOfSaveTxt)
+        print('[INFO] {} removed'.format(pathOfSaveTxt))
+    with open(pathOfSaveTxt, 'w+') as fo:
+        for fPath in filePaths:
+            fo.write(fPath+'\n')
