@@ -29,6 +29,7 @@ def build_DataSet(dataFolder):
 	for label in files.keys():
 		testData[label] = random.sample(files[label], testNum)
 		validData[label] = random.sample(set(files[label]) - set(testData[label]), validNum)
+		# trainData[label] = random.sample(set(files[label]) - set(testData[label]) - set(validData[label]), validNum)
 		trainData[label] = list(set(files[label]) - set(testData[label]) - set(validData[label]))
 	
 	# loop over the data splits
