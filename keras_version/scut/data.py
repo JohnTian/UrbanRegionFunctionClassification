@@ -70,13 +70,6 @@ def create_image_gen(HEIGHT, WIDTH, CHANNEL):
         batch_size=BATCH_SIZE)
     return (trainImageGen, valImageGen, testImageGen), (totalTrain, totalVal, totalTest)
 
-def create_visit_gen(HEIGHT, WIDTH, CHANNEL):
-    # derive the paths to the training, validation, and testing directories
-    trainVisitPath = os.path.sep.join([BASE_PATH, BASE_VISIT_TYPE, TRAIN])
-    validVisitPath = os.path.sep.join([BASE_PATH, BASE_VISIT_TYPE, VAL])
-    testVisitPath = os.path.sep.join([BASE_PATH, BASE_VISIT_TYPE, TEST])
-    # return trainVisitGen, valVisitGen, testVisitGen
-
 
 def load_data(filesPath, exts=('.jpg')):
     files = paths.list_files(filesPath, validExts=exts)
