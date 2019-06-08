@@ -4,6 +4,8 @@ import cv2
 import keras
 import pickle
 import numpy as np
+from .util import save2txt
+from collections import OrderedDict
 from .config import BASE_PATH, BASE_IMAGE_TYPE, BASE_VISIT_TYPE
 from .config import TRAIN, VAL, TEST, BATCH_SIZE, CLASSES
 from imutils import paths
@@ -117,31 +119,82 @@ def load_visit_data():
     return (trainVisitData, trainVisitLabel), (validVisitData, validVisitLabel), (testVisitData, testVisitLabel)
 
 
+def preprocessing_data_gen():
+    data = OrderedDict()
+    trainImagePath = os.path.sep.join([BASE_PATH, BASE_IMAGE_TYPE, TRAIN])
+    validImagePath = os.path.sep.join([BASE_PATH, BASE_IMAGE_TYPE, VAL])
+    testImagePath = os.path.sep.join([BASE_PATH, BASE_IMAGE_TYPE, TEST])
+
+    trainVisitPath = os.path.sep.join([BASE_PATH, BASE_VISIT_TYPE, TRAIN])
+    validVisitPath = os.path.sep.join([BASE_PATH, BASE_VISIT_TYPE, VAL])
+    testVisitPath = os.path.sep.join([BASE_PATH, BASE_VISIT_TYPE, TEST])
+
+    totalTrain = len(list(paths.list_images(trainImagePath)))
+    totalVal = len(list(paths.list_images(validImagePath)))
+
+    testFiles = list(paths.list_images(testImagePath))
+    testLabels = [CLASSES.index(line.split(os.path.sep)[-2]) for line in testFiles]
+    testNames = [line.split(os.path.sep)[-2] for line in testFiles]
+    totalTest = len(testLabels)
+
+    # Core
+    trainImageTxtPath = os.path.sep.join([trainImagePath, 'trainImage.txt'])
+    validImageTxtPath = os.path.sep.join([validImagePath, 'validImage.txt'])
+    testImageTxtPath = os.path.sep.join([testImagePath, 'testImage.txt'])
+    save2txt(trainImagePath, ('.jpg'), trainImageTxtPath)
+    save2txt(validImagePath, ('.jpg'), validImageTxtPath)
+    save2txt(testImagePath, ('.jpg'), testImageTxtPath)
+
+    trainVisitTxtPath = os.path.sep.join([trainVisitPath, 'trainVisit.txt'])
+    validVisitTxtPath = os.path.sep.join([validVisitPath, 'validVisit.txt'])
+    testVisitTxtPath = os.path.sep.join([testVisitPath, 'testVisit.txt'])
+    save2txt(trainVisitPath, ('.npy'), trainVisitTxtPath)
+    save2txt(validVisitPath, ('.npy'), validVisitTxtPath)
+    save2txt(testVisitPath, ('.npy'), testVisitTxtPath)
+
+    # Construct dict
+    data['totalTrain'] = totalTrain
+    data['totalVal'] = totalVal
+    data['totalTest'] = totalTest
+    data['testLabels'] = testLabels
+    data['testNames'] = testNames
+    data['trainImagePath'] = trainImageTxtPath
+    data['validImagePath'] = validImageTxtPath
+    data['testImagePath'] = testImageTxtPath
+    data['trainVisitPath'] = trainVisitTxtPath
+    data['validVisitPath'] = validVisitTxtPath
+    data['testVisitPath'] = testVisitTxtPath
+
+    return data
+
+
 def create_data_gen(imagePath, visitPath, mode='train', bs=BATCH_SIZE, numClasses=len(CLASSES)):
-    imageFiles = paths.list_files(imagePath, validExts=('.jpg'))
-    visitFiles = paths.list_files(visitPath, validExts=('.npy'))
-    imageIt = iter(imageFiles)
-    visitIt = iter(visitFiles)
+    fImage = open(imagePath, 'r')
+    fVisit = open(visitPath, 'r')
     while True:
         imageData = []
         visitData = []
         labels = []
-        while len(labels)<bs:
-            try:
-                iPath = next(imageIt)
-                imageData.append(cv2.imread(iPath))
-                l = iPath.split(os.path.sep)[-2]
-                label = CLASSES.index(l)
-                label = keras.utils.to_categorical(label, num_classes=numClasses)
-                labels.append(label)
-
-                vPath = next(visitIt)
-                da = np.load(vPath) # 24x26x7
-                elm = np.pad(da, ((4,4), (3,3), (0,0)), mode='constant', constant_values=0) # 32x32x7
-                visitData.append(elm)
-            except StopIteration:
-                imageIt = iter(imageFiles)
-                visitIt = iter(visitFiles)
+        while len(imageData)<bs:
+            iPath = fImage.readline().strip('\n')
+            vPath = fVisit.readline().strip('\n')
+            if (iPath == "") and (vPath == ""):
+                fImage.seek(0)
+                iPath = fImage.readline().strip('\n')
+                fVisit.seek(0)
+                vPath = fVisit.readline().strip('\n')
                 if mode != 'train':
                     break
+            # append image data
+            imageData.append(cv2.imread(iPath))
+            # append visit data
+            # 24x26x7 --> 32x32x7    
+            da = np.load(vPath)
+            elm = np.pad(da, ((4,4), (3,3), (0,0)), mode='constant', constant_values=0)
+            visitData.append(elm)
+            # append label data
+            l = iPath.split(os.path.sep)[-2]
+            label = CLASSES.index(l)
+            label = keras.utils.to_categorical(label, num_classes=numClasses)
+            labels.append(label)
         yield ([np.array(imageData), np.array(visitData)], np.array(labels))
