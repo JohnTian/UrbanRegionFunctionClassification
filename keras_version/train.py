@@ -80,7 +80,7 @@ callbacks = [
 ]
 
 print("[INFO] training model ...")
-model.fit_generator(
+H = model.fit_generator(
         trainGen,
 	    steps_per_epoch=totalTrain // config.BATCH_SIZE,
         validation_data=validGen,
