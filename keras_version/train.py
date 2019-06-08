@@ -6,7 +6,7 @@ import numpy as np
 from imutils import paths
 from scut import config
 from scut.util import plot_training
-from scut.data import create_data_gen
+from scut.data import preprocessing_data_gen, create_data_gen
 from scut.models import create_image_model, create_visit_model, lr_schedule
 from keras.models import Model
 from keras.optimizers import SGD
@@ -15,27 +15,24 @@ from sklearn.metrics import classification_report
 
 
 print("[INFO] loading data ...")
-trainImagePath = os.path.sep.join([config.BASE_PATH, config.BASE_IMAGE_TYPE, config.TRAIN])
-validImagePath = os.path.sep.join([config.BASE_PATH, config.BASE_IMAGE_TYPE, config.VAL])
-testImagePath = os.path.sep.join([config.BASE_PATH, config.BASE_IMAGE_TYPE, config.TEST])
+data = preprocessing_data_gen()
+totalTrain = data['totalTrain']
+totalVal = data['totalVal']
+totalTest = data['totalTest']
+testLabels = data['testLabels']
+testNames = data['testNames']
+trainImagePath = data['trainImagePath']
+validImagePath = data['validImagePath']
+testImagePath = data['testImagePath']
+trainVisitPath = data['trainVisitPath']
+validVisitPath = data['validVisitPath']
+testVisitPath = data['testVisitPath']
+print('[INFO] totalTrain {}, totalVal {}, totalTest {}'.format(totalTrain, totalVal, totalTest))
 
-trainVisitPath = os.path.sep.join([config.BASE_PATH, config.BASE_VISIT_TYPE, config.TRAIN])
-validVisitPath = os.path.sep.join([config.BASE_PATH, config.BASE_VISIT_TYPE, config.VAL])
-testVisitPath = os.path.sep.join([config.BASE_PATH, config.BASE_VISIT_TYPE, config.TEST])
-
-totalTrain = len(list(paths.list_images(trainImagePath)))
-totalVal = len(list(paths.list_images(validImagePath)))
-
-testFiles = list(paths.list_images(testImagePath))
-testLabels = [config.CLASSES.index(line.split(os.path.sep)[-2]) for line in testFiles]
-testNames = [line.split(os.path.sep)[-2] for line in testFiles]
-totalTest = len(testLabels)
-
+print("[INFO] creating generate object ...")
 trainGen = create_data_gen(trainImagePath, trainVisitPath, 'train')
 validGen = create_data_gen(validImagePath, validVisitPath, 'valid')
 testGen = create_data_gen(testImagePath, testVisitPath, 'test')
-
-print('[INFO] totalTrain {}, totalVal {}, totalTest {}'.format(totalTrain, totalVal, totalTest))
 
 print("[INFO] building model ...")
 imageModel = create_image_model(100, 100, 3)
@@ -73,10 +70,10 @@ callbacks = [
 	checkpoint,
 	lr_reducer,
 	lr_scheduler,
-	keras.callbacks.TensorBoard(
-        log_dir='log',
-        histogram_freq=0
-    )
+	# keras.callbacks.TensorBoard(
+    #     log_dir='log',
+    #     histogram_freq=0
+    # )
 ]
 
 print("[INFO] training model ...")
