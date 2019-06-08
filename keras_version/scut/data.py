@@ -18,7 +18,7 @@ def create_image_gen(HEIGHT, WIDTH, CHANNEL):
 
     # determine the total number of image paths in training, validation and testing directories
     totalTrain = len(list(paths.list_images(trainImagePath)))
-    totalVal = len(list(paths.list_images(valImagePath)))
+    totalVal = len(list(paths.list_images(validImagePath)))
     totalTest = len(list(paths.list_images(testImagePath)))
 
     # initialize the training data augmentation object
@@ -51,7 +51,7 @@ def create_image_gen(HEIGHT, WIDTH, CHANNEL):
 
     # initialize the validation generator
     valImageGen = valImageAug.flow_from_directory(
-        valImagePath,
+        validImagePath,
         class_mode="categorical",
         target_size=TARGET_SIZE,
         color_mode="rgb",
@@ -73,8 +73,7 @@ def create_visit_gen(HEIGHT, WIDTH, CHANNEL):
     trainVisitPath = os.path.sep.join([BASE_PATH, BASE_VISIT_TYPE, TRAIN])
     validVisitPath = os.path.sep.join([BASE_PATH, BASE_VISIT_TYPE, VAL])
     testVisitPath = os.path.sep.join([BASE_PATH, BASE_VISIT_TYPE, TEST])
-
-    return trainVisitGen, valVisitGen, testVisitGen
+    # return trainVisitGen, valVisitGen, testVisitGen
 
 
 def load_data(filesPath, exts=('.jpg')):
