@@ -78,7 +78,7 @@ def save2txt(pathOfData, validExts, pathOfSaveTxt):
     filePaths = paths.list_files(pathOfData, validExts=validExts)
     if os.path.exists(pathOfSaveTxt):
         os.remove(pathOfSaveTxt)
-        print('[INFO] {} removed'.format(pathOfSaveTxt))
+        #print('[INFO] {} removed'.format(pathOfSaveTxt))
     with open(pathOfSaveTxt, 'w+') as fo:
         for fPath in filePaths:
             fo.write(fPath+'\n')
