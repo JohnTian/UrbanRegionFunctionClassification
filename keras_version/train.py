@@ -70,12 +70,9 @@ lr_reducer = keras.callbacks.ReduceLROnPlateau(
 )
 callbacks = [
 	checkpoint,
-	lr_reducer,
-	lr_scheduler,
-	# keras.callbacks.TensorBoard(
-    #     log_dir='log',
-    #     histogram_freq=0
-    # )
+	#lr_reducer,
+	#lr_scheduler,
+	keras.callbacks.TensorBoard(log_dir='log',histogram_freq=0)
 ]
 
 print("[INFO] training model ...")
