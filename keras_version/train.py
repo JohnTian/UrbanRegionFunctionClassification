@@ -35,8 +35,8 @@ validGen = create_data_gen(validImagePath, validVisitPath, 'valid')
 testGen = create_data_gen(testImagePath, testVisitPath, 'test')
 
 print("[INFO] building model ...")
-# imageModel = create_image_model(100, 100, 3)
-imageModel = create_visit_model(100, 100, 3)
+imageModel = create_image_model(100, 100, 3)
+#imageModel = create_visit_model(100, 100, 3)
 visitModel = create_visit_model(32, 32, 7)
 combinedInput = keras.layers.concatenate([imageModel.output, visitModel.output])
 x = Dense(16, activation="relu")(combinedInput)
@@ -97,9 +97,9 @@ print(
 	classification_report(
 		testLabels,
 		predIdxs,
-		target_names=testNames
+		target_names=config.CLASSES
 	)
 )
 
 print("[INFO] plot image for training ...")
-plot_training(H, 50, config.WARMUP_PLOT_PATH)
+plot_training(H, config.EPOCH, config.WARMUP_PLOT_PATH)
