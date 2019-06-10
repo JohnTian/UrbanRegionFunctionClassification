@@ -20,14 +20,14 @@ totalTrain = data['totalTrain']
 totalVal = data['totalVal']
 totalTest = data['totalTest']
 testLabels = data['testLabels']
-testNames = data['testNames']
+# testNames = data['testNames']
 trainImagePath = data['trainImagePath']
 validImagePath = data['validImagePath']
 testImagePath = data['testImagePath']
 trainVisitPath = data['trainVisitPath']
 validVisitPath = data['validVisitPath']
 testVisitPath = data['testVisitPath']
-print('[INFO] totalTrain {}, totalVal {}, totalTest {}'.format(totalTrain, totalVal, totalTest))
+print('[INFO] totalTrain: {}, totalVal: {}, totalTest: {}'.format(totalTrain, totalVal, totalTest))
 
 print("[INFO] creating generate object ...")
 trainGen = create_data_gen(trainImagePath, trainVisitPath, 'train')
