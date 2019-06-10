@@ -59,6 +59,7 @@ def create_image_model(HEIGHT, WIDTH, CHANNEL):
 
 
 def create_visit_model(HEIGHT, WIDTH, CHANNEL):
+    '''
     # load the base network, ensuring the head FC layer sets are left off
     baseModel = ResNet50(weights="imagenet", include_top=False, input_tensor=Input(shape=(HEIGHT, WIDTH, CHANNEL)))
 
@@ -76,5 +77,7 @@ def create_visit_model(HEIGHT, WIDTH, CHANNEL):
     # loop over all layers in the base model and freeze them so they will
     # *not* be updated during the first training process
     for layer in baseModel.layers:
-        layer.tr
-    # return create_resnet((HEIGHT, WIDTH, CHANNEL))
+        layer.trainable = False
+    return model
+    '''
+    return create_resnet((HEIGHT, WIDTH, CHANNEL))
