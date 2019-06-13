@@ -91,8 +91,8 @@ def create_visit_model(HEIGHT, WIDTH, CHANNEL):
 
     # apply another FC layer, this one to match the number of nodes
     # coming out of the MLP
-    x = Dense(4)(x)
-    x = Activation("relu")(x)
+    x = Dense(len(config.CLASSES))(x)
+    x = Activation("softmax")(x)
 
     # construct the CNN
     model = Model(inputs, x)
