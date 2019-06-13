@@ -4,6 +4,7 @@ import numpy as np
 from scut import config
 from .resnet import create_resnet
 from keras.models import Model
+from keras.layers import GlobalAveragePooling2D
 from keras.layers import MaxPooling2D, SeparableConvolution2D
 from keras.layers import Input, Conv2D, Activation, BatchNormalization
 from keras.layers.core import Dense
@@ -37,7 +38,7 @@ def lr_schedule(epoch):
     return lr
 
 
-def create_image_model(HEIGHT, WIDTH, CHANNEL):
+def create_image_model_baseon_pretrained(HEIGHT, WIDTH, CHANNEL):
     # load the base network, ensuring the head FC layer sets are left off
     baseModel = DenseNet201(weights="imagenet", include_top=False, input_tensor=Input(shape=(HEIGHT, WIDTH, CHANNEL)))
 
@@ -59,12 +60,8 @@ def create_image_model(HEIGHT, WIDTH, CHANNEL):
     return model
 
 
-def create_visit_model(HEIGHT, WIDTH, CHANNEL):
-    ## Version 1.1
-    # return create_resnet((HEIGHT, WIDTH, CHANNEL))
-
-    ## Version 1.2
-    filters=(16, 32, 64)
+def create_image_model(HEIGHT, WIDTH, CHANNEL):
+    filters=(32, 64, 128)
     inputShape = (HEIGHT, WIDTH, CHANNEL)
     chanDim = -1
 	# define the model input
@@ -77,20 +74,52 @@ def create_visit_model(HEIGHT, WIDTH, CHANNEL):
             x = inputs
 
         # CONV => RELU => BN => POOL
-        x = Conv2D(f, (3, 3), padding="same")(x)
+        x = SeparableConvolution2D(f, (3, 3), padding="same")(x)
         x = Activation("relu")(x)
         x = BatchNormalization(axis=chanDim)(x)
         x = MaxPooling2D(pool_size=(2, 2))(x)
 
-    # flatten the volume, then FC => RELU => BN => DROPOUT
-    x = Flatten()(x)
-    x = Dense(16)(x)
-    x = Activation("relu")(x)
-    x = BatchNormalization(axis=chanDim)(x)
-    x = Dropout(0.5)(x)
+    #!!! Fixed structure for output !!!
+    x = GlobalAveragePooling2D()(x)
 
-    # apply another FC layer, this one to match the number of nodes
-    # coming out of the MLP
+    x = Dense(32)(x)
+    x = Activation("relu")(x)
+
+    x = Dense(len(config.CLASSES))(x)
+    x = Activation("softmax")(x)
+
+    # construct the CNN
+    model = Model(inputs, x)
+
+    # return the CNN
+    return model
+
+
+def create_visit_model(HEIGHT, WIDTH, CHANNEL):
+    filters=(32, 64, 128)
+    inputShape = (HEIGHT, WIDTH, CHANNEL)
+    chanDim = -1
+	# define the model input
+    inputs = Input(shape=inputShape)
+	# loop over the number of filters
+    for (i, f) in enumerate(filters):
+        # if this is the first CONV layer then set the input
+        # appropriately
+        if i == 0:
+            x = inputs
+
+        # CONV => RELU => BN => POOL
+        x = SeparableConvolution2D(f, (3, 3), padding="same")(x)
+        x = Activation("relu")(x)
+        x = BatchNormalization(axis=chanDim)(x)
+        x = MaxPooling2D(pool_size=(2, 2))(x)
+
+    #!!! Fixed structure for output !!!
+    x = GlobalAveragePooling2D()(x)
+
+    x = Dense(32)(x)
+    x = Activation("relu")(x)
+
     x = Dense(len(config.CLASSES))(x)
     x = Activation("softmax")(x)
 
