@@ -36,17 +36,16 @@ testGen = create_data_gen(testImagePath, testVisitPath, 'test')
 
 print("[INFO] building model ...")
 imageModel = create_image_model(100, 100, 3)
-#imageModel = create_visit_model(100, 100, 3)
 visitModel = create_visit_model(24, 26, 7)
 combinedInput = keras.layers.concatenate([imageModel.output, visitModel.output])
 x = Dense(16, activation="relu")(combinedInput)
 x = Dense(9, activation="softmax")(x)
 model = Model(inputs=[imageModel.input, visitModel.input], outputs=x)
-keras.utils.plot_model(model, show_shapes=True, show_layer_names=True, to_file='log/urbanRegion.png')
+model.summary()
 
 print("[INFO] compiling model ...")
-opt = SGD(lr=1e-4, momentum=0.9)
-model.compile(loss="categorical_crossentropy", optimizer=opt, metrics=["accuracy"])
+# opt = SGD(lr=1e-4, momentum=0.9)
+model.compile(loss="categorical_crossentropy", optimizer='rmsprop', metrics=["accuracy"])
 
 print("[INFO] config callbacks ...")
 # Prepare model model saving directory.
