@@ -42,6 +42,16 @@ x = Dense(16, activation="relu")(combinedInput)
 x = Dense(9, activation="softmax")(x)
 model = Model(inputs=[imageModel.input, visitModel.input], outputs=x)
 model.summary()
+# save model structure in file
+if not os.path.exists(config.MODEL_PATH):
+    os.makedirs(config.MODEL_PATH)
+modelStructurePath = os.path.sep.join([config.MODEL_PATH, 'urbanRegion.png'])
+keras.utils.plot_model(
+	model,
+	show_shapes=True,
+	show_layer_names=True,
+	to_file=modelStructurePath
+)
 
 print("[INFO] compiling model ...")
 # opt = SGD(lr=1e-4, momentum=0.9)
