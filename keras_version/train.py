@@ -10,6 +10,7 @@ from scut.data import preprocessing_data_gen, create_data_gen
 from scut.models import create_image_model, create_visit_model, lr_schedule
 from keras.models import Model
 from keras.optimizers import SGD
+from keras.layers import GlobalAveragePooling2D
 from keras.layers.core import Dense
 from sklearn.metrics import classification_report
 
@@ -38,7 +39,8 @@ print("[INFO] building model ...")
 imageModel = create_image_model(100, 100, 3)
 visitModel = create_visit_model(24, 26, 7)
 combinedInput = keras.layers.concatenate([imageModel.output, visitModel.output])
-x = Dense(16, activation="relu")(combinedInput)
+combinedInput = GlobalAveragePooling2D()(combinedInput)
+x = Dense(64, activation="relu")(combinedInput)
 x = Dense(9, activation="softmax")(x)
 model = Model(inputs=[imageModel.input, visitModel.input], outputs=x)
 model.summary()
