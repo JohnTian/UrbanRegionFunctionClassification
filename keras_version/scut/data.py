@@ -186,8 +186,53 @@ def create_data_gen(imagePath, visitPath, mode='train', bs=BATCH_SIZE, numClasse
             # elm = np.pad(da, ((4,4), (3,3), (0,0)), mode='constant', constant_values=0)
             visitData.append(da)
             # append label data
-            l = iPath.split(os.path.sep)[-2]
+            l = vPath.split(os.path.sep)[-2]
             label = CLASSES.index(l)
             label = keras.utils.to_categorical(label, num_classes=numClasses)
             labels.append(label)
         yield ([np.array(imageData), np.array(visitData)], np.array(labels))
+
+
+def image_gen(imagePath, mode='train', bs=BATCH_SIZE, numClasses=len(CLASSES)):
+    fImage = open(imagePath, 'r')
+    while True:
+        imageData = []
+        labels = []
+        while len(imageData)<bs:
+            iPath = fImage.readline().strip('\n')
+            if iPath == "":
+                fImage.seek(0)
+                iPath = fImage.readline().strip('\n')
+                if mode != 'train':
+                    break
+            # append image data
+            imageData.append(cv2.imread(iPath))
+            # append label data
+            l = iPath.split(os.path.sep)[-2]
+            label = CLASSES.index(l)
+            label = keras.utils.to_categorical(label, num_classes=numClasses)
+            labels.append(label)
+        yield (np.array(imageData), np.array(labels))
+
+
+def visit_gen(visitPath, mode='train', bs=BATCH_SIZE, numClasses=len(CLASSES)):
+    fVisit = open(visitPath, 'r')
+    while True:
+        visitData = []
+        labels = []
+        while len(visitData)<bs:
+            vPath = fVisit.readline().strip('\n')
+            if vPath == "":
+                fVisit.seek(0)
+                vPath = fVisit.readline().strip('\n')
+                if mode != 'train':
+                    break
+            # append visit data
+            da = np.load(vPath)
+            visitData.append(da)
+            # append label data
+            l = vPath.split(os.path.sep)[-2]
+            label = CLASSES.index(l)
+            label = keras.utils.to_categorical(label, num_classes=numClasses)
+            labels.append(label)
+        yield (np.array(visitData), np.array(labels))
