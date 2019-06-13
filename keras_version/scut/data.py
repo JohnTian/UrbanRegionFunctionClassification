@@ -183,8 +183,8 @@ def create_data_gen(imagePath, visitPath, mode='train', bs=BATCH_SIZE, numClasse
             # append visit data
             # 24x26x7 --> 32x32x7    
             da = np.load(vPath)
-            elm = np.pad(da, ((4,4), (3,3), (0,0)), mode='constant', constant_values=0)
-            visitData.append(elm)
+            # elm = np.pad(da, ((4,4), (3,3), (0,0)), mode='constant', constant_values=0)
+            visitData.append(da)
             # append label data
             l = iPath.split(os.path.sep)[-2]
             label = CLASSES.index(l)
