@@ -7,10 +7,7 @@ from imutils import paths
 from scut import config
 from scut.util import plot_training
 from scut.data import preprocessing_data_gen, image_gen
-from scut.models import create_image_model, create_visit_model, lr_schedule
-from keras.models import Model
-from keras.optimizers import SGD
-from keras.layers.core import Dense
+from scut.models import create_image_model, lr_schedule
 from sklearn.metrics import classification_report
 
 
@@ -33,9 +30,18 @@ testGen = image_gen(testImagePath, 'test')
 print("[INFO] building model ...")
 model = create_image_model(100, 100, 3)
 model.summary()
+# save model structure in file
+if not os.path.exists(config.MODEL_PATH):
+    os.makedirs(config.MODEL_PATH)
+modelStructurePath = os.path.sep.join([config.MODEL_PATH, 'urbanRegionImage.png'])
+keras.utils.plot_model(
+	model,
+	show_shapes=True,
+	show_layer_names=True,
+	to_file=modelStructurePath
+)
 
 print("[INFO] compiling model ...")
-# opt = SGD(lr=1e-4, momentum=0.9)
 model.compile(loss="categorical_crossentropy", optimizer='rmsprop', metrics=["accuracy"])
 
 print("[INFO] config callbacks ...")

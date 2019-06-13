@@ -7,10 +7,7 @@ from imutils import paths
 from scut import config
 from scut.util import plot_training
 from scut.data import preprocessing_data_gen, visit_gen
-from scut.models import create_image_model, create_visit_model, lr_schedule
-from keras.models import Model
-from keras.optimizers import SGD
-from keras.layers.core import Dense
+from scut.models import create_visit_model, lr_schedule
 from sklearn.metrics import classification_report
 
 
@@ -33,15 +30,18 @@ testGen = visit_gen(testVisitPath, 'test')
 print("[INFO] building model ...")
 model = create_visit_model(24, 26, 7)
 model.summary()
+# save model structure in file
+if not os.path.exists(config.MODEL_PATH):
+    os.makedirs(config.MODEL_PATH)
+modelStructurePath = os.path.sep.join([config.MODEL_PATH, 'urbanRegionVisit.png'])
 keras.utils.plot_model(
 	model,
 	show_shapes=True,
 	show_layer_names=True,
-	to_file='output/urbanRegionVisit.png'
+	to_file=modelStructurePath
 )
 
 print("[INFO] compiling model ...")
-# opt = SGD(lr=1e-4, momentum=0.9)
 model.compile(loss="categorical_crossentropy", optimizer='rmsprop', metrics=["accuracy"])
 
 print("[INFO] config callbacks ...")
@@ -66,8 +66,8 @@ lr_reducer = keras.callbacks.ReduceLROnPlateau(
 )
 callbacks = [
 	checkpoint,
-	#lr_reducer,
-	#lr_scheduler,
+	# lr_reducer,
+	# lr_scheduler,
 	keras.callbacks.TensorBoard(log_dir='log',histogram_freq=0)
 ]
 
