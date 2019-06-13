@@ -51,7 +51,7 @@ def read_and_decode_valid(filename):
 
 def load_training_set():
     with tf.name_scope('input_train'):
-        image_train, visit_train, label_train = read_and_decode_train("../data/tfrecord/train.tfrecord")
+        image_train, visit_train, label_train = read_and_decode_train("../data/tfrecord/train36949.tfrecord")
         image_batch_train, visit_batch_train, label_batch_train = tf.train.shuffle_batch(
             [image_train, visit_train, label_train], batch_size=batch_size, capacity=2048, min_after_dequeue=2000, num_threads=4
         )
@@ -69,7 +69,7 @@ def load_valid_set():
 def train(model):
     # network
     # amount = 82827
-    amount = 40000
+    amount = 10000
     image_batch_train, visit_batch_train, label_batch_train = load_training_set()
     image_batch_valid, visia_batch_valid, label_batch_valid = load_valid_set()
 

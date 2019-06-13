@@ -20,12 +20,12 @@ class MultiModal(object):
         print(self.output_image)
         self.output_visit = self.visit_network(self.visit)
         print(self.output_visit)
-        self.output = tf.concat([self.output_image*0.3, self.output_visit*0.7], axis=1)
+        self.output = tf.concat([self.output_image, self.output_visit], axis=1)
         self.prediction = tf.layers.dense(self.output, units=9)
 
         self.loss = self.get_loss(self.prediction, self.one_hot)
 
-        self.batch_size = 64 # 512
+        self.batch_size = 128 # 512
         with tf.name_scope('correct_prediction'):
             correct_prediction = tf.equal(tf.argmax(self.prediction, 1), tf.argmax(self.one_hot, 1))
         with tf.name_scope('accuracy'):
