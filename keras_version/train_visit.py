@@ -59,14 +59,13 @@ checkpoint = keras.callbacks.ModelCheckpoint(
 )
 lr_scheduler = keras.callbacks.LearningRateScheduler(lr_schedule)
 lr_reducer = keras.callbacks.ReduceLROnPlateau(
-	factor=np.sqrt(0.1),
-	cooldown=0,
-	patience=5,
-	min_lr=0.5e-6
+	factor=0.1,
+	patience=10,
+	min_lr=1e-6
 )
 callbacks = [
 	checkpoint,
-	# lr_reducer,
+	lr_reducer,
 	# lr_scheduler,
 	keras.callbacks.TensorBoard(log_dir='log',histogram_freq=0)
 ]
