@@ -155,13 +155,14 @@ def build_Oversampling_DataSet(dataFolder):
 				# image
 				filename = filePath.split(os.path.sep)[-1]
 				pImagePath = os.path.sep.join([dirImagePath, filename])
-				shutil.copy2(filePath, pImagePath)
+				if not os.path.exists(pImagePath):
+					shutil.copy2(filePath, pImagePath)
 				# visit
 				visit = visit2arrayAndNormal(filePath.replace('jpg','txt'))
 				pVisitPath = os.path.sep.join([dirVisitPath, filename.replace('jpg', 'npy')])
-				np.save(pVisitPath, visit)
+				if not os.path.exists(pVisitPath):
+					np.save(pVisitPath, visit)
 		print('[INFO] {} done!'.format(split))
-
 
 
 if __name__ == "__main__":
