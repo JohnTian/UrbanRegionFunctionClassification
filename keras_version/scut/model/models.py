@@ -1,7 +1,7 @@
 # -*- encoding:utf-8 -*-
 import keras
 import numpy as np
-from scut import config
+from .. import config
 from .resnet import create_resnet
 from keras.models import Model
 from keras.layers import GlobalAveragePooling2D
