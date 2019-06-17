@@ -7,7 +7,7 @@ from imutils import paths
 from scut import config
 from scut.util import plot_training
 from scut.data import preprocessing_data_gen, create_data_gen
-from scut.models import create_image_model, create_visit_model, lr_schedule
+from scut.model.models import create_image_model, create_visit_model, lr_schedule
 from keras.models import Model
 from keras.optimizers import SGD
 from keras.layers import GlobalAveragePooling2D

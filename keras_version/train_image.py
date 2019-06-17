@@ -7,7 +7,7 @@ from imutils import paths
 from scut import config
 from scut.util import plot_training
 from scut.data import preprocessing_data_gen, image_gen
-from scut.models import create_image_model, lr_schedule
+from scut.model.models import create_image_model, lr_schedule
 from sklearn.metrics import classification_report
 
 
