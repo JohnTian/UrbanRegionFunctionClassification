@@ -82,3 +82,13 @@ def save2txt(pathOfData, validExts, pathOfSaveTxt):
     with open(pathOfSaveTxt, 'w+') as fo:
         for fPath in filePaths:
             fo.write(fPath+'\n')
+
+
+def computeRatioOfBlackAndWhite(imgPath):
+    im = cv2.imread(imgPath, cv2.IMREAD_GRAYSCALE)
+    imHeight, imWidth = np.shape(im)
+    imSize = imHeight * imWidth
+    hist = cv2.calcHist([im],[0],None,[256],[0,256])
+    ratioOfBlack = 1.0 * hist[0,0] / imSize
+    ratioOfWhite = 1.0 * hist[255,0] / imSize
+    return (ratioOfBlack, ratioOfWhite)
