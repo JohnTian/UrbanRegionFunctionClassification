@@ -166,4 +166,4 @@ def build_Oversampling_DataSet(dataFolder):
 
 
 if __name__ == "__main__":
-	build_DataSet(config.ORIG_INPUT_DATASET)
+	build_Oversampling_DataSet(config.ORIG_INPUT_DATASET)
