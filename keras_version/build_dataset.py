@@ -9,6 +9,7 @@ from scut import config
 from imutils import paths
 from scut.util import randomCropAndNormal
 from scut.util import visit2arrayAndNormal
+from scut.util import computeRatioOfBlackAndWhite
 from collections import OrderedDict
 
 
@@ -82,6 +83,85 @@ def build_DataSet(dataFolder):
 				# p = os.path.sep.join([dirPath, filename.replace('jpg', 'npy')])
 				# np.save(p, imiv)
 		print('[INFO] {} done!'.format(split))
+
+
+def build_Oversampling_DataSet(dataFolder):
+	# 记录各个类中图像的地址
+	files = OrderedDict()
+	for code in config.CLASSES:
+		files[code] = []
+
+	print('[INFO] filter original data...')
+	for filePath in paths.list_files(dataFolder):
+		if filePath[-3:] == 'jpg':
+			# UrbanRegionData/train/007/030516_007.jpg
+			ratioOfBlack, ratioOfWhite = computeRatioOfBlackAndWhite(filePath)
+			if (ratioOfBlack > 0.25) or (ratioOfWhite > 0.75):
+				continue
+			else:
+				filename = filePath.split(os.path.sep)[-1]
+				label = config.CLASSES[int(filename.split('_')[-1].split('.')[0])-1]
+				files[label].append(filePath)
+
+	print('[INFO] after filter original data...')
+	for k, v in files.items():
+		print('original data {:>25}:{:>5}'.format(k, len(v)))
+	print(sum([len(v) for v in files.values()]))
+
+	# 查找各个类中最小的图像个数 -- 各个类对应的图像个数不一样
+	print('[INFO] split original data into testData, validData, trainData...')
+	minNum = min([len(v) for v in files.values()])
+	testNum = int(np.ceil(minNum*0.1))
+	validNum = testNum
+	trainData, testData, validData = {}, {}, {}
+	for label in files.keys():
+		testData[label] = random.sample(files[label], testNum)
+		validData[label] = random.sample(set(files[label]) - set(testData[label]), validNum)
+		# trainData[label] = random.sample(set(files[label]) - set(testData[label]) - set(validData[label]), validNum*3)
+		trainData[label] = list(set(files[label]) - set(testData[label]) - set(validData[label]))
+	# ------------------------------------  训练集均衡化 -- 均衡各个类的图像个数  ------------------------------------
+	print('[INFO] before balance trainData...')
+	for k, v in trainData.items():
+		print('TrainData {:>25}:{:>5}'.format(k, len(v)))
+	print(sum([len(v) for v in trainData.values()]))
+
+	trainDict = {}
+	for code, value in trainData.items():
+		trainDict[code] = len(value)
+	maxNum = max(trainDict.values())
+	for label in trainDict.keys():
+		for _ in range(maxNum - len(trainData[label])):
+			# 随机从均衡化前的0-trainDict[label] - 1区间内采样添加
+			trainData[label].append(trainData[label][random.randint(0, trainDict[label] - 1)])
+
+	print('[INFO] after balance trainData...')
+	for k, v in trainData.items():
+		print('TrainData {:>25}:{:>5}'.format(k, len(v)))
+	print(sum([len(v) for v in trainData.values()]))
+    # ------------------------------------------------------------------------------------------------------------
+	# loop over the data splits
+	for split, data in zip((config.TRAIN, config.TEST, config.VAL), (trainData, testData, validData)):
+		print("[INFO] processing '{} split'...".format(split))
+		for label, filePaths in data.items():
+			# construct the output directory for image and visit
+			dirImagePath = os.path.sep.join([config.BASE_PATH, config.BASE_IMAGE_TYPE, split, label])
+			dirVisitPath = os.path.sep.join([config.BASE_PATH, config.BASE_VISIT_TYPE, split, label])
+			if not os.path.exists(dirImagePath):
+				os.makedirs(dirImagePath)
+			if not os.path.exists(dirVisitPath):
+				os.makedirs(dirVisitPath)
+			# save image and visit
+			for filePath in filePaths:
+				# image
+				filename = filePath.split(os.path.sep)[-1]
+				pImagePath = os.path.sep.join([dirImagePath, filename])
+				shutil.copy2(filePath, pImagePath)
+				# visit
+				visit = visit2arrayAndNormal(filePath.replace('jpg','txt'))
+				pVisitPath = os.path.sep.join([dirVisitPath, filename.replace('jpg', 'npy')])
+				np.save(pVisitPath, visit)
+		print('[INFO] {} done!'.format(split))
+
 
 
 if __name__ == "__main__":
