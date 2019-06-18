@@ -32,7 +32,7 @@ def build_DataSet(dataFolder):
 		validData[label] = random.sample(set(files[label]) - set(testData[label]), validNum)
 		# trainData[label] = random.sample(set(files[label]) - set(testData[label]) - set(validData[label]), validNum*3)
 		trainData[label] = list(set(files[label]) - set(testData[label]) - set(validData[label]))
-	
+
 	# loop over the data splits
 	for split, data in zip((config.TRAIN, config.TEST, config.VAL), (trainData, testData, validData)):
 		# grab all image paths in the current split
@@ -146,10 +146,10 @@ def build_Oversampling_DataSet(dataFolder, bDebug=False):
 		for k, v in trainData.items():
 			print('[DEBUG] after balance TrainData {:>25}:{:>5}'.format(k, len(v)))
 		print('[DEBUG] after balance TrainData sum:', sum([len(v) for v in trainData.values()]))
-    # ------------------------------------------------------------------------------------------------------------
+        # ------------------------------------------------------------------------------------------------------------
 	# loop over the data splits
-	# for split, data in zip((config.TRAIN, config.TEST, config.VAL), (trainData, testData, validData)):
-	for split, data in zip((config.TEST, config.VAL), (testData, validData)):
+	for split, data in zip((config.TRAIN, config.TEST, config.VAL), (trainData, testData, validData)):
+	#for split, data in zip((config.TEST, config.VAL), (testData, validData)):
 		print("[INFO] processing '{} split'...".format(split))
 		for label, filePaths in data.items():
 			# construct the output directory for image and visit
