@@ -85,7 +85,7 @@ def build_DataSet(dataFolder):
 		print('[INFO] {} done!'.format(split))
 
 
-def build_Oversampling_DataSet(dataFolder):
+def build_Oversampling_DataSet(dataFolder, bDebug=False):
 	# 记录各个类中图像的地址
 	files = OrderedDict()
 	for code in config.CLASSES:
@@ -102,29 +102,37 @@ def build_Oversampling_DataSet(dataFolder):
 				filename = filePath.split(os.path.sep)[-1]
 				label = config.CLASSES[int(filename.split('_')[-1].split('.')[0])-1]
 				files[label].append(filePath)
-
-	print('[INFO] after filter original data...')
-	for k, v in files.items():
-		print('original data {:>25}:{:>5}'.format(k, len(v)))
-	print(sum([len(v) for v in files.values()]))
+	if bDebug:
+		print('[DEBUG] after filter original data...')
+		for k, v in files.items():
+			print('[DEBUG] after filter {:>25}:{:>5}'.format(k, len(v)))
+		print('[DEBUG] after filter original data sum:', sum([len(v) for v in files.values()]))
 
 	# 查找各个类中最小的图像个数 -- 各个类对应的图像个数不一样
 	print('[INFO] split original data into testData, validData, trainData...')
 	minNum = min([len(v) for v in files.values()])
 	testNum = int(np.ceil(minNum*0.1))
-	validNum = testNum
 	trainData, testData, validData = {}, {}, {}
 	for label in files.keys():
 		testData[label] = random.sample(files[label], testNum)
-		validData[label] = random.sample(set(files[label]) - set(testData[label]), validNum)
-		# trainData[label] = random.sample(set(files[label]) - set(testData[label]) - set(validData[label]), validNum*3)
+		validData[label] = random.sample(list(set(files[label]) - set(testData[label])), testNum)
+		# trainData[label] = random.sample(set(files[label]) - set(testData[label]) - set(validData[label]), testNum*3)
 		trainData[label] = list(set(files[label]) - set(testData[label]) - set(validData[label]))
-	# ------------------------------------  训练集均衡化 -- 均衡各个类的图像个数  ------------------------------------
-	print('[INFO] before balance trainData...')
-	for k, v in trainData.items():
-		print('TrainData {:>25}:{:>5}'.format(k, len(v)))
-	print(sum([len(v) for v in trainData.values()]))
 
+	if bDebug:
+		for k, v in testData.items():
+			print('[DEBUG] testData {:>25}:{:>5}'.format(k, len(v)))
+		print('[DEBUG] testData sum:', sum([len(v) for v in testData.values()]))
+
+		for k, v in validData.items():
+			print('[DEBUG] validData {:>25}:{:>5}'.format(k, len(v)))
+		print('[DEBUG] validData sum:', sum([len(v) for v in validData.values()]))
+
+		print('[DEBUG] before balance trainData...')
+		for k, v in trainData.items():
+			print('[DEBUG] before balance TrainData {:>25}:{:>5}'.format(k, len(v)))
+		print('[DEBUG] before balance TrainData sum:', sum([len(v) for v in trainData.values()]))
+	# ------------------------------------  训练集均衡化 -- 均衡各个类的图像个数  ------------------------------------
 	trainDict = {}
 	for code, value in trainData.items():
 		trainDict[code] = len(value)
@@ -133,14 +141,15 @@ def build_Oversampling_DataSet(dataFolder):
 		for _ in range(maxNum - len(trainData[label])):
 			# 随机从均衡化前的0-trainDict[label] - 1区间内采样添加
 			trainData[label].append(trainData[label][random.randint(0, trainDict[label] - 1)])
-
-	print('[INFO] after balance trainData...')
-	for k, v in trainData.items():
-		print('TrainData {:>25}:{:>5}'.format(k, len(v)))
-	print(sum([len(v) for v in trainData.values()]))
+	if bDebug:
+		print('[DEBUG] after balance trainData...')
+		for k, v in trainData.items():
+			print('[DEBUG] after balance TrainData {:>25}:{:>5}'.format(k, len(v)))
+		print('[DEBUG] after balance TrainData sum:', sum([len(v) for v in trainData.values()]))
     # ------------------------------------------------------------------------------------------------------------
 	# loop over the data splits
-	for split, data in zip((config.TRAIN, config.TEST, config.VAL), (trainData, testData, validData)):
+	# for split, data in zip((config.TRAIN, config.TEST, config.VAL), (trainData, testData, validData)):
+	for split, data in zip((config.TEST, config.VAL), (testData, validData)):
 		print("[INFO] processing '{} split'...".format(split))
 		for label, filePaths in data.items():
 			# construct the output directory for image and visit
@@ -158,12 +167,12 @@ def build_Oversampling_DataSet(dataFolder):
 				if not os.path.exists(pImagePath):
 					shutil.copy2(filePath, pImagePath)
 				# visit
-				visit = visit2arrayAndNormal(filePath.replace('jpg','txt'))
 				pVisitPath = os.path.sep.join([dirVisitPath, filename.replace('jpg', 'npy')])
 				if not os.path.exists(pVisitPath):
+					visit = visit2arrayAndNormal(filePath.replace('jpg','txt'))
 					np.save(pVisitPath, visit)
 		print('[INFO] {} done!'.format(split))
 
 
 if __name__ == "__main__":
-	build_Oversampling_DataSet(config.ORIG_INPUT_DATASET)
+	build_Oversampling_DataSet(config.ORIG_INPUT_DATASET, True)
