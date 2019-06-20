@@ -98,14 +98,20 @@ def create_visit_model(HEIGHT, WIDTH, CHANNEL):
         if i == 0:
             x = inputs
         # CONV => RELU => BN => POOL
-        x = SeparableConvolution2D(filters=f, kernel_size=(3, 3), padding='same', activation='relu', kernel_regularizer=keras.regularizers.l2(0.001))(x)
+        x = SeparableConvolution2D(
+            filters=f,
+            kernel_size=(3, 3),
+            padding='same',
+            activation='relu',
+            kernel_regularizer=keras.regularizers.l2(0.001)
+        )(x)
         #x = Conv2D(filters=f, kernel_size=(3, 3), padding='same', activation='relu')(x)
         x = BatchNormalization(axis=chanDim)(x)
         if t:
             x = MaxPooling2D(pool_size=(2, 2))(x)
     #!!! Fixed structure for output !!!
     x = GlobalAveragePooling2D()(x)
-    x = Dense(units=32, activation='relu')(x)
+    x = Dense(units=16, activation='relu')(x)
     x = Dense(units=len(config.CLASSES), activation='softmax')(x)
     # construct the CNN
     return Model(inputs, x)
