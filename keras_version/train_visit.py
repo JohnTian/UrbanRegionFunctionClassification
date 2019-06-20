@@ -2,6 +2,7 @@
 # USAGE: python train.py
 import os
 import keras
+from keras import optimizers
 import numpy as np
 from imutils import paths
 from scut import config
@@ -42,7 +43,7 @@ keras.utils.plot_model(
 )
 
 print("[INFO] compiling model ...")
-model.compile(loss="categorical_crossentropy", optimizer='rmsprop', metrics=["accuracy"])
+model.compile(loss="categorical_crossentropy", optimizer=optimizers.RMSprop(lr=0.0001), metrics=["accuracy"])
 
 print("[INFO] config callbacks ...")
 # Prepare model model saving directory.

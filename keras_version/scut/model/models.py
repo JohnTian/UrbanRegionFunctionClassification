@@ -64,9 +64,9 @@ def create_image_model(HEIGHT, WIDTH, CHANNEL):
 	# define the model input
     inputs = Input(shape=(HEIGHT, WIDTH, CHANNEL))
 	# loop over the number of filters
-    filters = (32, 64, 128)
+    filters = (16, 32, 64, 128)
     idxOfFilters = list(range(len(filters)))
-    flagOfPool2D = (True, True, False)
+    flagOfPool2D = (True, True, True, False)
     chanDim = -1
     for (i, f, t) in zip(idxOfFilters, filters, flagOfPool2D):
         # if this is the first CONV layer then set the input appropriately
@@ -86,19 +86,20 @@ def create_image_model(HEIGHT, WIDTH, CHANNEL):
 
 
 def create_visit_model(HEIGHT, WIDTH, CHANNEL):
-	# define the model input
+    # define the model input
     inputs = Input(shape=(HEIGHT, WIDTH, CHANNEL))
-	# loop over the number of filters
-    filters = (32, 64, 128)
+    # loop over the number of filters
+    filters = (8,16)
     idxOfFilters = list(range(len(filters)))
-    flagOfPool2D = (True, True, False)
+    flagOfPool2D = (False, False)
     chanDim = -1
     for (i, f, t) in zip(idxOfFilters, filters, flagOfPool2D):
         # if this is the first CONV layer then set the input appropriately
         if i == 0:
             x = inputs
         # CONV => RELU => BN => POOL
-        x = SeparableConvolution2D(filters=f, kernel_size=(3, 3), padding='same', activation='relu')(x)
+        x = SeparableConvolution2D(filters=f, kernel_size=(3, 3), padding='same', activation='relu', kernel_regularizer=keras.regularizers.l2(0.001))(x)
+        #x = Conv2D(filters=f, kernel_size=(3, 3), padding='same', activation='relu')(x)
         x = BatchNormalization(axis=chanDim)(x)
         if t:
             x = MaxPooling2D(pool_size=(2, 2))(x)
