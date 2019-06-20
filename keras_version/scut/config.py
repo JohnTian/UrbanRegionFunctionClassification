@@ -31,8 +31,8 @@ CLASSES = [
 ]
 
 # set the batch size
-BATCH_SIZE = 512
-EPOCH = 20
+BATCH_SIZE = 64
+EPOCH = 50
 
 # set the path to the serialized model after training
 MODEL_PATH = "saved_models"

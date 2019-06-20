@@ -43,7 +43,8 @@ keras.utils.plot_model(
 )
 
 print("[INFO] compiling model ...")
-model.compile(loss="categorical_crossentropy", optimizer=optimizers.RMSprop(lr=0.0001), metrics=["accuracy"])
+#model.compile(loss="categorical_crossentropy", optimizer=optimizers.SGD(lr=1e-4, momentum=0.9), metrics=["accuracy"])
+model.compile(loss="categorical_crossentropy", optimizer=optimizers.Adadelta(), metrics=["accuracy"])
 
 print("[INFO] config callbacks ...")
 # Prepare model model saving directory.
@@ -66,15 +67,15 @@ lr_reducer = keras.callbacks.ReduceLROnPlateau(
 )
 callbacks = [
 	checkpoint,
-	lr_reducer,
-	# lr_scheduler,
-	keras.callbacks.TensorBoard(log_dir='log',histogram_freq=0)
+	#lr_reducer,
+	#lr_scheduler,
+	#keras.callbacks.TensorBoard(log_dir='log',histogram_freq=0)
 ]
 
 print("[INFO] training model ...")
 H = model.fit_generator(
         trainGen,
-	    steps_per_epoch=totalTrain // config.BATCH_SIZE,
+	steps_per_epoch=totalTrain // config.BATCH_SIZE,
         validation_data=validGen,
         validation_steps=totalVal // config.BATCH_SIZE,
         epochs=config.EPOCH,

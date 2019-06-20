@@ -5,7 +5,7 @@ from .. import config
 from .resnet import create_resnet
 from keras.models import Model
 from keras.layers import GlobalAveragePooling2D
-from keras.layers import Input, Conv2D, BatchNormalization
+from keras.layers import Input, Conv2D, BatchNormalization, Activation
 from keras.layers import MaxPooling2D, SeparableConvolution2D
 from keras.layers.core import Dense
 from keras.layers.core import Flatten
@@ -61,9 +61,9 @@ def create_image_model_baseon_pretrained(HEIGHT, WIDTH, CHANNEL):
 
 
 def create_image_model(HEIGHT, WIDTH, CHANNEL):
-	# define the model input
+    # define the model input
     inputs = Input(shape=(HEIGHT, WIDTH, CHANNEL))
-	# loop over the number of filters
+    # loop over the number of filters
     filters = (16, 32, 64, 128)
     idxOfFilters = list(range(len(filters)))
     flagOfPool2D = (True, True, True, False)
@@ -72,9 +72,11 @@ def create_image_model(HEIGHT, WIDTH, CHANNEL):
         # if this is the first CONV layer then set the input appropriately
         if i == 0:
             x = inputs
-        # CONV => RELU => BN => POOL
-        x = SeparableConvolution2D(filters=f, kernel_size=(3, 3), padding='same', activation='relu')(x)
+        x = Conv2D(filters=f, kernel_size=(3, 3), padding='same')(x)
+        #x = SeparableConvolution2D(filters=f, kernel_size=3, padding='same')(x)
         x = BatchNormalization(axis=chanDim)(x)
+        x = Activation('relu')(x)
+        x = Dropout(0.5)(x)
         if t:
             x = MaxPooling2D(pool_size=(2, 2))(x)
     #!!! Fixed structure for output !!!
@@ -89,29 +91,24 @@ def create_visit_model(HEIGHT, WIDTH, CHANNEL):
     # define the model input
     inputs = Input(shape=(HEIGHT, WIDTH, CHANNEL))
     # loop over the number of filters
-    filters = (8,16)
+    filters = (4,8)
     idxOfFilters = list(range(len(filters)))
-    flagOfPool2D = (False, False)
+    flagOfPool2D = (True,False)
     chanDim = -1
     for (i, f, t) in zip(idxOfFilters, filters, flagOfPool2D):
         # if this is the first CONV layer then set the input appropriately
         if i == 0:
             x = inputs
-        # CONV => RELU => BN => POOL
-        x = SeparableConvolution2D(
-            filters=f,
-            kernel_size=(3, 3),
-            padding='same',
-            activation='relu',
-            kernel_regularizer=keras.regularizers.l2(0.001)
-        )(x)
-        #x = Conv2D(filters=f, kernel_size=(3, 3), padding='same', activation='relu')(x)
+        x = Conv2D(filters=f, kernel_size=(3, 3), padding='same', kernel_regularizer=keras.regularizers.l1_l2(l1=0.01, l2=0.01))(x)
+        #x = SeparableConvolution2D(filters=f, kernel_size=3, padding='same')(x)
         x = BatchNormalization(axis=chanDim)(x)
+        x = Activation('relu')(x)
+        x = Dropout(0.5)(x)
         if t:
             x = MaxPooling2D(pool_size=(2, 2))(x)
     #!!! Fixed structure for output !!!
     x = GlobalAveragePooling2D()(x)
-    x = Dense(units=16, activation='relu')(x)
+    x = Dense(units=8, activation='relu')(x)
     x = Dense(units=len(config.CLASSES), activation='softmax')(x)
-    # construct the CNN
+    # construct the model
     return Model(inputs, x)

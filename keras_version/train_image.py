@@ -3,9 +3,10 @@
 import os
 import keras
 import numpy as np
+from keras import optimizers
 from imutils import paths
 from scut import config
-from scut.util import plot_training
+from scut.util import plot_training_loss
 from scut.data import preprocessing_data_gen, image_gen
 from scut.model.models import create_image_model, lr_schedule
 from sklearn.metrics import classification_report
@@ -42,7 +43,9 @@ keras.utils.plot_model(
 )
 
 print("[INFO] compiling model ...")
-model.compile(loss="categorical_crossentropy", optimizer='rmsprop', metrics=["accuracy"])
+#model.compile(loss="categorical_crossentropy", optimizer='rmsprop', metrics=["accuracy"])
+#model.compile(loss="categorical_crossentropy", optimizer=optimizers.SGD(lr=1e-4, momentum=0.9), metrics=["accuracy"])
+model.compile(loss="categorical_crossentropy", optimizer=optimizers.Adadelta(), metrics=["accuracy"])
 
 print("[INFO] config callbacks ...")
 # Prepare model model saving directory.
@@ -94,4 +97,4 @@ print(
 )
 
 print("[INFO] plot image for training ...")
-plot_training(H, config.EPOCH, config.WARMUP_PLOT_PATH)
+plot_training_loss(H, config.EPOCH, config.LOSS_PLOT_PATH)
