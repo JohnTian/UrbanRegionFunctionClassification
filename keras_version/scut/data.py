@@ -115,14 +115,49 @@ def load_visit_data():
 def preprocessing_data_gen():
     data = OrderedDict()
     trainImagePath = os.path.sep.join([BASE_PATH, BASE_IMAGE_TYPE, TRAIN])
+    trainVisitPath = os.path.sep.join([BASE_PATH, BASE_VISIT_TYPE, TRAIN])
+	# ------------------------------------  训练集均衡化 -- 均衡各个类的图像个数  ------------------------------------
+    trainData = {}
+	for code in CLASSES:
+		trainData[code] = []
+    for filePath in paths.list_images(trainImagePath):
+        code = filePath.split(os.path.sep)[-2]
+        trainData[code].append(filePath)
+	trainDict = {}
+	for code, value in trainData.items():
+		trainDict[code] = len(value)
+	maxNum = max(trainDict.values())
+	for label in trainDict.keys():
+		for _ in range(maxNum - len(trainData[label])):
+			# 随机从均衡化前的0-trainDict[label] - 1区间内采样添加
+			trainData[label].append(trainData[label][random.randint(0, trainDict[label] - 1)])
+	if True:
+		print('[DEBUG] after balance trainData...')
+		for k, v in trainData.items():
+			print('[DEBUG] after balance TrainData {:>25}:{:>5}'.format(k, len(v)))
+		print('[DEBUG] after balance TrainData sum:', sum([len(v) for v in trainData.values()]))
+    trainImageTxtPath = os.path.sep.join([trainImagePath, 'trainImage.txt'])
+    trainVisitTxtPath = os.path.sep.join([trainVisitPath, 'trainVisit.txt'])
+    totalTrain = 0
+    fi = open(trainImageTxtPath, 'w+')
+    fv = open(trainVisitTxtPath, 'w+')
+    for k, v in trainData.items():
+        for fP in v:
+            totalTrain += 1
+            fi.write(fP+'\n')
+            fvP = fP.replace('image', 'visit').replace('.jpg', '.npy')
+            fv.write(fvP+'\n')
+    fi.close()
+    fv.close()
+    print('[INFO] totalTrain:', totalTrain)
+    # ------------------------------------------------------------------------------------------------------------
+
     validImagePath = os.path.sep.join([BASE_PATH, BASE_IMAGE_TYPE, VAL])
     testImagePath = os.path.sep.join([BASE_PATH, BASE_IMAGE_TYPE, TEST])
 
-    trainVisitPath = os.path.sep.join([BASE_PATH, BASE_VISIT_TYPE, TRAIN])
     validVisitPath = os.path.sep.join([BASE_PATH, BASE_VISIT_TYPE, VAL])
     testVisitPath = os.path.sep.join([BASE_PATH, BASE_VISIT_TYPE, TEST])
 
-    totalTrain = len(list(paths.list_images(trainImagePath)))
     totalVal = len(list(paths.list_images(validImagePath)))
 
     testFiles = list(paths.list_images(testImagePath))
@@ -131,17 +166,13 @@ def preprocessing_data_gen():
     totalTest = len(testLabels)
 
     # Core
-    trainImageTxtPath = os.path.sep.join([trainImagePath, 'trainImage.txt'])
     validImageTxtPath = os.path.sep.join([validImagePath, 'validImage.txt'])
     testImageTxtPath = os.path.sep.join([testImagePath, 'testImage.txt'])
-    save2txt(trainImagePath, ('.jpg'), trainImageTxtPath)
     save2txt(validImagePath, ('.jpg'), validImageTxtPath)
     save2txt(testImagePath, ('.jpg'), testImageTxtPath)
 
-    trainVisitTxtPath = os.path.sep.join([trainVisitPath, 'trainVisit.txt'])
     validVisitTxtPath = os.path.sep.join([validVisitPath, 'validVisit.txt'])
     testVisitTxtPath = os.path.sep.join([testVisitPath, 'testVisit.txt'])
-    save2txt(trainVisitPath, ('.npy'), trainVisitTxtPath)
     save2txt(validVisitPath, ('.npy'), validVisitTxtPath)
     save2txt(testVisitPath, ('.npy'), testVisitTxtPath)
 

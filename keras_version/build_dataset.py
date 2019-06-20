@@ -85,7 +85,7 @@ def build_DataSet(dataFolder):
 		print('[INFO] {} done!'.format(split))
 
 
-def build_Oversampling_DataSet(dataFolder, bDebug=False):
+def build_filter_DataSet(dataFolder, bDebug=False):
 	# 记录各个类中图像的地址
 	files = OrderedDict()
 	for code in config.CLASSES:
@@ -132,21 +132,7 @@ def build_Oversampling_DataSet(dataFolder, bDebug=False):
 		for k, v in trainData.items():
 			print('[DEBUG] before balance TrainData {:>25}:{:>5}'.format(k, len(v)))
 		print('[DEBUG] before balance TrainData sum:', sum([len(v) for v in trainData.values()]))
-	# ------------------------------------  训练集均衡化 -- 均衡各个类的图像个数  ------------------------------------
-	trainDict = {}
-	for code, value in trainData.items():
-		trainDict[code] = len(value)
-	maxNum = max(trainDict.values())
-	for label in trainDict.keys():
-		for _ in range(maxNum - len(trainData[label])):
-			# 随机从均衡化前的0-trainDict[label] - 1区间内采样添加
-			trainData[label].append(trainData[label][random.randint(0, trainDict[label] - 1)])
-	if bDebug:
-		print('[DEBUG] after balance trainData...')
-		for k, v in trainData.items():
-			print('[DEBUG] after balance TrainData {:>25}:{:>5}'.format(k, len(v)))
-		print('[DEBUG] after balance TrainData sum:', sum([len(v) for v in trainData.values()]))
-        # ------------------------------------------------------------------------------------------------------------
+
 	# loop over the data splits
 	for split, data in zip((config.TRAIN, config.TEST, config.VAL), (trainData, testData, validData)):
 	#for split, data in zip((config.TEST, config.VAL), (testData, validData)):
@@ -175,4 +161,4 @@ def build_Oversampling_DataSet(dataFolder, bDebug=False):
 
 
 if __name__ == "__main__":
-	build_Oversampling_DataSet(config.ORIG_INPUT_DATASET, True)
+	build_filter_DataSet(config.ORIG_INPUT_DATASET, True)
