@@ -159,6 +159,5 @@ def build_filter_DataSet(dataFolder, bDebug=False):
 					np.save(pVisitPath, visit)
 		print('[INFO] {} done!'.format(split))
 
-
 if __name__ == "__main__":
 	build_filter_DataSet(config.ORIG_INPUT_DATASET, True)

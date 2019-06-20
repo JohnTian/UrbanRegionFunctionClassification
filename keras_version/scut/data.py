@@ -3,6 +3,7 @@ import os
 import cv2
 import keras
 import pickle
+import random
 import numpy as np
 from .util import save2txt
 from collections import OrderedDict
@@ -116,26 +117,26 @@ def preprocessing_data_gen():
     data = OrderedDict()
     trainImagePath = os.path.sep.join([BASE_PATH, BASE_IMAGE_TYPE, TRAIN])
     trainVisitPath = os.path.sep.join([BASE_PATH, BASE_VISIT_TYPE, TRAIN])
-	# ------------------------------------  训练集均衡化 -- 均衡各个类的图像个数  ------------------------------------
+    # ------------------------------------  训练集均衡化 -- 均衡各个类的图像个数  ------------------------------------
     trainData = {}
-	for code in CLASSES:
-		trainData[code] = []
+    for code in CLASSES:
+	trainData[code] = []
     for filePath in paths.list_images(trainImagePath):
         code = filePath.split(os.path.sep)[-2]
         trainData[code].append(filePath)
-	trainDict = {}
-	for code, value in trainData.items():
-		trainDict[code] = len(value)
-	maxNum = max(trainDict.values())
-	for label in trainDict.keys():
-		for _ in range(maxNum - len(trainData[label])):
-			# 随机从均衡化前的0-trainDict[label] - 1区间内采样添加
-			trainData[label].append(trainData[label][random.randint(0, trainDict[label] - 1)])
-	if True:
-		print('[DEBUG] after balance trainData...')
-		for k, v in trainData.items():
-			print('[DEBUG] after balance TrainData {:>25}:{:>5}'.format(k, len(v)))
-		print('[DEBUG] after balance TrainData sum:', sum([len(v) for v in trainData.values()]))
+    trainDict = {}
+    for code, value in trainData.items():
+	trainDict[code] = len(value)
+    maxNum = max(trainDict.values())
+    for label in trainDict.keys():
+	for _ in range(maxNum - len(trainData[label])):
+	    # 随机从均衡化前的0-trainDict[label] - 1区间内采样添加
+	    trainData[label].append(trainData[label][random.randint(0, trainDict[label] - 1)])
+    if True:
+	print('[DEBUG] after balance trainData...')
+	for k, v in trainData.items():
+            print('[DEBUG] after balance TrainData {:>25}:{:>5}'.format(k, len(v)))
+	print('[DEBUG] after balance TrainData sum:', sum([len(v) for v in trainData.values()]))
     trainImageTxtPath = os.path.sep.join([trainImagePath, 'trainImage.txt'])
     trainVisitTxtPath = os.path.sep.join([trainVisitPath, 'trainVisit.txt'])
     totalTrain = 0
@@ -212,7 +213,7 @@ def create_data_gen(imagePath, visitPath, mode='train', bs=BATCH_SIZE, numClasse
             # append image data
             imageData.append(cv2.imread(iPath))
             # append visit data
-            # 24x26x7 --> 32x32x7    
+            # 24x26x7 --> 32x32x7
             da = np.load(vPath)
             # elm = np.pad(da, ((4,4), (3,3), (0,0)), mode='constant', constant_values=0)
             visitData.append(da)
