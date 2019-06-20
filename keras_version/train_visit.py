@@ -6,7 +6,7 @@ from keras import optimizers
 import numpy as np
 from imutils import paths
 from scut import config
-from scut.util import plot_training
+from scut.util import plot_training_loss
 from scut.data import preprocessing_data_gen, visit_gen
 from scut.model.models import create_visit_model, lr_schedule
 from sklearn.metrics import classification_report
@@ -95,4 +95,4 @@ print(
 )
 
 print("[INFO] plot image for training ...")
-plot_training(H, config.EPOCH, config.WARMUP_PLOT_PATH)
+plot_training_loss(H, config.EPOCH, config.LOSS_PLOT_PATH)

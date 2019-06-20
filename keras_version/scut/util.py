@@ -11,7 +11,6 @@ import pandas as pd
 from imutils import paths
 import matplotlib.pyplot as plt
 
-
 def plot_training(H, N, plotPath):
 	# construct a plot that plots and saves the training history
 	plt.style.use("ggplot")
@@ -23,6 +22,30 @@ def plot_training(H, N, plotPath):
 	plt.title("Training Loss and Accuracy")
 	plt.xlabel("Epoch #")
 	plt.ylabel("Loss/Accuracy")
+	plt.legend(loc="lower left")
+	plt.savefig(plotPath)
+
+def plot_training_loss(H, N, plotPath):
+	# construct a plot that plots and saves the training history
+	plt.style.use("ggplot")
+	plt.figure()
+	plt.plot(np.arange(0, N), H.history["loss"], label="train_loss")
+	plt.plot(np.arange(0, N), H.history["val_loss"], label="val_loss")
+	plt.title("Training Loss")
+	plt.xlabel("Epoch #")
+	plt.ylabel("Loss")
+	plt.legend(loc="lower left")
+	plt.savefig(plotPath)
+
+def plot_training_acc(H, N, plotPath):
+	# construct a plot that plots and saves the training history
+	plt.style.use("ggplot")
+	plt.figure()
+	plt.plot(np.arange(0, N), H.history["acc"], label="train_acc")
+	plt.plot(np.arange(0, N), H.history["val_acc"], label="val_acc")
+	plt.title("Training Accuracy")
+	plt.xlabel("Epoch #")
+	plt.ylabel("Accuracy")
 	plt.legend(loc="lower left")
 	plt.savefig(plotPath)
 

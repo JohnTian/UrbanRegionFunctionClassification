@@ -38,3 +38,5 @@ EPOCH = 20
 MODEL_PATH = "saved_models"
 MODEL_NAME = "urbanRegion.h5"
 WARMUP_PLOT_PATH = os.path.sep.join([MODEL_PATH, "warmup.png"])
+LOSS_PLOT_PATH = os.path.sep.join([MODEL_PATH, "loss.png"])
+ACC_PLOT_PATH = os.path.sep.join([MODEL_PATH, "acc.png"])
