@@ -64,9 +64,9 @@ def create_image_model(HEIGHT, WIDTH, CHANNEL):
     # define the model input
     inputs = Input(shape=(HEIGHT, WIDTH, CHANNEL))
     # loop over the number of filters
-    filters = (16, 32, 64, 128)
+    filters = (16, 32, 64)
     idxOfFilters = list(range(len(filters)))
-    flagOfPool2D = (True, True, True, False)
+    flagOfPool2D = (True, True, True)
     chanDim = -1
     for (i, f, t) in zip(idxOfFilters, filters, flagOfPool2D):
         # if this is the first CONV layer then set the input appropriately
@@ -81,7 +81,7 @@ def create_image_model(HEIGHT, WIDTH, CHANNEL):
             x = MaxPooling2D(pool_size=(2, 2))(x)
     #!!! Fixed structure for output !!!
     x = GlobalAveragePooling2D()(x)
-    x = Dense(units=32, activation='relu')(x)
+    x = Dense(units=16, activation='relu')(x)
     x = Dense(units=len(config.CLASSES), activation='softmax')(x)
     # construct the CNN
     return Model(inputs, x)

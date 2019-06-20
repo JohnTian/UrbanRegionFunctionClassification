@@ -5,11 +5,11 @@ import keras
 import numpy as np
 from imutils import paths
 from scut import config
-from scut.util import plot_training
+from scut.util import plot_training, plot_training_loss, plot_training_acc
 from scut.data import preprocessing_data_gen, create_data_gen
 from scut.model.models import create_image_model, create_visit_model, lr_schedule
 from keras.models import Model
-from keras.optimizers import SGD
+from keras.optimizers import SGD, Adam, Adamax
 from keras.layers import GlobalAveragePooling2D
 from keras.layers.core import Dense
 from sklearn.metrics import classification_report
@@ -56,7 +56,7 @@ keras.utils.plot_model(
 
 print("[INFO] compiling model ...")
 # opt = SGD(lr=1e-4, momentum=0.9)
-model.compile(loss="categorical_crossentropy", optimizer='rmsprop', metrics=["accuracy"])
+model.compile(loss="categorical_crossentropy", optimizer=Adamax(), metrics=["accuracy"])
 
 print("[INFO] config callbacks ...")
 # Prepare model model saving directory.
@@ -79,9 +79,9 @@ lr_reducer = keras.callbacks.ReduceLROnPlateau(
 )
 callbacks = [
 	checkpoint,
-	lr_reducer,
+	# lr_reducer,
 	# lr_scheduler,
-	keras.callbacks.TensorBoard(log_dir='log',histogram_freq=0)
+	# keras.callbacks.TensorBoard(log_dir='log',histogram_freq=0)
 ]
 
 print("[INFO] training model ...")
@@ -108,4 +108,5 @@ print(
 )
 
 print("[INFO] plot image for training ...")
-plot_training(H, config.EPOCH, config.WARMUP_PLOT_PATH)
+plot_training_loss(H, config.EPOCH, config.LOSS_PLOT_PATH)
+plot_training_acc(H, N, config.ACC_PLOT_PATH)
