@@ -36,10 +36,10 @@ validGen = create_data_gen(validImagePath, validVisitPath, 'valid')
 testGen = create_data_gen(testImagePath, testVisitPath, 'test')
 
 print("[INFO] building model ...")
-imageModel = create_image_model(100, 100, 3)
+imageModel = create_image_model(88, 88, 3)
 visitModel = create_visit_model(24, 26, 7)
 combinedInput = keras.layers.concatenate([imageModel.output, visitModel.output])
-x = Dense(64, activation="relu")(combinedInput)
+x = Dense(32, activation="relu")(combinedInput)
 x = Dense(9, activation="softmax")(x)
 model = Model(inputs=[imageModel.input, visitModel.input], outputs=x)
 model.summary()
@@ -109,4 +109,4 @@ print(
 
 print("[INFO] plot image for training ...")
 plot_training_loss(H, config.EPOCH, config.LOSS_PLOT_PATH)
-plot_training_acc(H, N, config.ACC_PLOT_PATH)
+plot_training_acc(H, config.EPOCH, config.ACC_PLOT_PATH)
