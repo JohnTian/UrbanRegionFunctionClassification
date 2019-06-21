@@ -10,6 +10,7 @@ from scut.util import plot_training_loss
 from scut.data import preprocessing_data_gen, visit_gen
 from scut.model.models import create_visit_model, lr_schedule
 from sklearn.metrics import classification_report
+from keras.optimizers import SGD, Adam, Adamax, Adadelta
 
 
 print("[INFO] loading data ...")
@@ -44,7 +45,8 @@ keras.utils.plot_model(
 
 print("[INFO] compiling model ...")
 #model.compile(loss="categorical_crossentropy", optimizer=optimizers.SGD(lr=1e-4, momentum=0.9), metrics=["accuracy"])
-model.compile(loss="categorical_crossentropy", optimizer=optimizers.Adadelta(), metrics=["accuracy"])
+model.compile(loss="categorical_crossentropy", optimizer=optimizers.Adamax(), metrics=["accuracy"]) # best
+#model.compile(loss="categorical_crossentropy", optimizer=optimizers.Adadelta(), metrics=["accuracy"])
 
 print("[INFO] config callbacks ...")
 # Prepare model model saving directory.

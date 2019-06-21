@@ -64,19 +64,19 @@ def create_image_model(HEIGHT, WIDTH, CHANNEL):
     # define the model input
     inputs = Input(shape=(HEIGHT, WIDTH, CHANNEL))
     # loop over the number of filters
-    filters = (16, 32, 64)
+    filters = (16,32,64)
     idxOfFilters = list(range(len(filters)))
-    flagOfPool2D = (True, True, True)
+    flagOfPool2D = (True,True,True)
     chanDim = -1
     for (i, f, t) in zip(idxOfFilters, filters, flagOfPool2D):
         # if this is the first CONV layer then set the input appropriately
         if i == 0:
             x = inputs
-        x = Conv2D(filters=f, kernel_size=(3, 3), padding='same')(x)
-        #x = SeparableConvolution2D(filters=f, kernel_size=3, padding='same')(x)
+        #x = Conv2D(filters=f, kernel_size=(3, 3), padding='same', kernel_regularizer=keras.regularizers.l1_l2(l1=0.01, l2=0.01))(x)
+        x = SeparableConvolution2D(filters=f, kernel_size=3, padding='same')(x)
         x = BatchNormalization(axis=chanDim)(x)
         x = Activation('relu')(x)
-        x = Dropout(0.5)(x)
+        #x = Dropout(0.5)(x)
         if t:
             x = MaxPooling2D(pool_size=(2, 2))(x)
     #!!! Fixed structure for output !!!
@@ -91,24 +91,25 @@ def create_visit_model(HEIGHT, WIDTH, CHANNEL):
     # define the model input
     inputs = Input(shape=(HEIGHT, WIDTH, CHANNEL))
     # loop over the number of filters
-    filters = (4,8)
+    filters = (8,16,32)
     idxOfFilters = list(range(len(filters)))
-    flagOfPool2D = (True,False)
+    flagOfPool2D = (True,False,False)
     chanDim = -1
     for (i, f, t) in zip(idxOfFilters, filters, flagOfPool2D):
         # if this is the first CONV layer then set the input appropriately
         if i == 0:
             x = inputs
-        x = Conv2D(filters=f, kernel_size=(3, 3), padding='same', kernel_regularizer=keras.regularizers.l1_l2(l1=0.01, l2=0.01))(x)
-        #x = SeparableConvolution2D(filters=f, kernel_size=3, padding='same')(x)
+        #x = Conv2D(filters=f, kernel_size=(3, 3), padding='same', kernel_regularizer=keras.regularizers.l2(0.01))(x)
+        #x = SeparableConvolution2D(filters=f, kernel_size=3, padding='same', kernel_regularizer=keras.regularizers.l2(0.01))(x)
+        x = SeparableConvolution2D(filters=f, kernel_size=3, padding='same')(x)
         x = BatchNormalization(axis=chanDim)(x)
         x = Activation('relu')(x)
-        x = Dropout(0.5)(x)
+        #x = Dropout(0.5)(x)
         if t:
             x = MaxPooling2D(pool_size=(2, 2))(x)
     #!!! Fixed structure for output !!!
     x = GlobalAveragePooling2D()(x)
-    x = Dense(units=8, activation='relu')(x)
+    x = Dense(units=16, activation='relu')(x)
     x = Dense(units=len(config.CLASSES), activation='softmax')(x)
     # construct the model
     return Model(inputs, x)
