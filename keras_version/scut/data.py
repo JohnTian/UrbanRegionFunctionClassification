@@ -137,20 +137,26 @@ def preprocessing_data_gen():
 	for k, v in trainData.items():
             print('[DEBUG] after balance TrainData {:>25}:{:>5}'.format(k, len(v)))
 	print('[DEBUG] after balance TrainData sum:', sum([len(v) for v in trainData.values()]))
+
+    # 对图像地址进行随机化处理
+    trainImageList = []
+    for v in trainData.values():
+        trainImageList.extend(v)
+    random.shuffle(trainImageList)
+    totalTrain = len(trainImageList)
+    print('[INFO] totalTrain:', totalTrain)
+
+    # 保存图像和对应的文本文件路径
     trainImageTxtPath = os.path.sep.join([trainImagePath, 'trainImage.txt'])
     trainVisitTxtPath = os.path.sep.join([trainVisitPath, 'trainVisit.txt'])
-    totalTrain = 0
     fi = open(trainImageTxtPath, 'w+')
     fv = open(trainVisitTxtPath, 'w+')
-    for k, v in trainData.items():
-        for fP in v:
-            totalTrain += 1
-            fi.write(fP+'\n')
-            fvP = fP.replace('image', 'visit').replace('.jpg', '.npy')
-            fv.write(fvP+'\n')
+    for fP in trainImageList:
+        fi.write(fP+'\n')
+        fvP = fP.replace('image', 'visit').replace('.jpg', '.npy')
+        fv.write(fvP+'\n')
     fi.close()
     fv.close()
-    print('[INFO] totalTrain:', totalTrain)
     # ------------------------------------------------------------------------------------------------------------
 
     validImagePath = os.path.sep.join([BASE_PATH, BASE_IMAGE_TYPE, VAL])
@@ -212,7 +218,7 @@ def create_data_gen(imagePath, visitPath, mode='train', bs=BATCH_SIZE, numClasse
                     break
             # append image data
             im = cv2.imread(iPath)
-            im /= 255.0
+            im = im / 255.0
             imageData.append(im)
             # append visit data
             # 24x26x7 --> 32x32x7
@@ -241,7 +247,7 @@ def image_gen(imagePath, mode='train', bs=BATCH_SIZE, numClasses=len(CLASSES)):
                     break
             # append image data
             im = cv2.imread(iPath)
-            im /= 255.0
+            im = im / 255.0
             imageData.append(im)
             # append label data
             l = iPath.split(os.path.sep)[-2]
