@@ -10,6 +10,7 @@ from scut.util import plot_training_loss
 from scut.data import preprocessing_data_gen, image_gen
 from scut.model.models import create_image_model, lr_schedule, create_image_model_baseon_pretrained
 from sklearn.metrics import classification_report
+from keras.optimizers import SGD, Adam, Adamax, Adadelta
 
 
 print("[INFO] loading data ...")
