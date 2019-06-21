@@ -211,7 +211,9 @@ def create_data_gen(imagePath, visitPath, mode='train', bs=BATCH_SIZE, numClasse
                 if mode != 'train':
                     break
             # append image data
-            imageData.append(cv2.imread(iPath))
+            im = cv2.imread(iPath)
+            im /= 255.0
+            imageData.append(im)
             # append visit data
             # 24x26x7 --> 32x32x7
             da = np.load(vPath)
@@ -238,7 +240,9 @@ def image_gen(imagePath, mode='train', bs=BATCH_SIZE, numClasses=len(CLASSES)):
                 if mode != 'train':
                     break
             # append image data
-            imageData.append(cv2.imread(iPath))
+            im = cv2.imread(iPath)
+            im /= 255.0
+            imageData.append(im)
             # append label data
             l = iPath.split(os.path.sep)[-2]
             label = CLASSES.index(l)
