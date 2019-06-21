@@ -142,6 +142,8 @@ def preprocessing_data_gen():
     trainImageList = []
     for v in trainData.values():
         trainImageList.extend(v)
+    # 设置seed,可以复现随机顺序
+    random.seed(20190621)
     random.shuffle(trainImageList)
     totalTrain = len(trainImageList)
     print('[INFO] totalTrain:', totalTrain)
