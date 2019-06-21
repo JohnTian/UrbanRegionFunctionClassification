@@ -5,7 +5,7 @@ import keras
 import pickle
 import random
 import numpy as np
-from .util import save2txt
+from .util import save2txt, randomCropAndNormal
 from collections import OrderedDict
 from .config import BASE_PATH, BASE_IMAGE_TYPE, BASE_VISIT_TYPE
 from .config import TRAIN, VAL, TEST, BATCH_SIZE, CLASSES
@@ -217,9 +217,11 @@ def create_data_gen(imagePath, visitPath, mode='train', bs=BATCH_SIZE, numClasse
                 if mode != 'train':
                     break
             # append image data
-            im = cv2.imread(iPath)
-            im = im / 255.0
-            imageData.append(im)
+            #im = cv2.imread(iPath)
+            #im = im / 255.0
+            #imageData.append(im)
+            imageData.append(randomCropAndNormal(iPath))
+
             # append visit data
             # 24x26x7 --> 32x32x7
             da = np.load(vPath)
@@ -246,9 +248,11 @@ def image_gen(imagePath, mode='train', bs=BATCH_SIZE, numClasses=len(CLASSES)):
                 if mode != 'train':
                     break
             # append image data
-            im = cv2.imread(iPath)
-            im = im / 255.0
-            imageData.append(im)
+            #im = cv2.imread(iPath)
+            #im = im / 255.0
+            #imageData.append(im)
+            imageData.append(randomCropAndNormal(iPath))
+
             # append label data
             l = iPath.split(os.path.sep)[-2]
             label = CLASSES.index(l)
