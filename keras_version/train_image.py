@@ -8,7 +8,7 @@ from imutils import paths
 from scut import config
 from scut.util import plot_training_loss
 from scut.data import preprocessing_data_gen, image_gen
-from scut.model.models import create_image_model, lr_schedule
+from scut.model.models import create_image_model, lr_schedule, create_image_model_baseon_pretrained
 from sklearn.metrics import classification_report
 
 
@@ -29,7 +29,8 @@ validGen = image_gen(validImagePath, 'valid')
 testGen = image_gen(testImagePath, 'test')
 
 print("[INFO] building model ...")
-model = create_image_model(100, 100, 3)
+#model = create_image_model(100, 100, 3)
+model = create_image_model_baseon_pretrained(100, 100, 3)
 model.summary()
 # save model structure in file
 if not os.path.exists(config.MODEL_PATH):
@@ -45,7 +46,7 @@ keras.utils.plot_model(
 print("[INFO] compiling model ...")
 #model.compile(loss="categorical_crossentropy", optimizer='rmsprop', metrics=["accuracy"])
 #model.compile(loss="categorical_crossentropy", optimizer=optimizers.SGD(lr=1e-4, momentum=0.9), metrics=["accuracy"])
-model.compile(loss="categorical_crossentropy", optimizer=optimizers.Adadelta(), metrics=["accuracy"])
+model.compile(loss="categorical_crossentropy", optimizer=optimizers.Adamax(), metrics=["accuracy"])
 
 print("[INFO] config callbacks ...")
 # Prepare model model saving directory.
