@@ -5,7 +5,7 @@ import keras
 import pickle
 import random
 import numpy as np
-from .util import save2txt, randomCropAndNormal
+from .util import save2txt, randomCropAndNormal, rotate
 from collections import OrderedDict
 from .config import BASE_PATH, BASE_IMAGE_TYPE, BASE_VISIT_TYPE
 from .config import TRAIN, VAL, TEST, BATCH_SIZE, CLASSES
@@ -70,7 +70,6 @@ def create_image_gen(HEIGHT, WIDTH, CHANNEL):
         shuffle=False,
         batch_size=BATCH_SIZE)
     return (trainImageGen, valImageGen, testImageGen), (totalTrain, totalVal, totalTest)
-
 
 def load_data(filesPath, exts=('.jpg')):
     files = paths.list_files(filesPath, validExts=exts)
@@ -219,16 +218,24 @@ def create_data_gen(imagePath, visitPath, mode='train', bs=BATCH_SIZE, numClasse
                 if mode != 'train':
                     break
             # append image data
-            #im = cv2.imread(iPath)
-            #im = im / 255.0
-            #imageData.append(im)
-            imageData.append(randomCropAndNormal(iPath))
+            im = cv2.imread(iPath)
+            im = im / 255.0
+            ims = [
+                im,
+                cv2.GaussianBlur(im,(3,3),0),
+                rotate(im, 2),
+                rotate(im, 3),
+                rotate(im, -2),
+                rotate(im, -3)]
+            imageData.extend(ims)
+            # imageData.append(randomCropAndNormal(iPath))
 
             # append visit data
-            # 24x26x7 --> 32x32x7
             da = np.load(vPath)
-            # elm = np.pad(da, ((4,4), (3,3), (0,0)), mode='constant', constant_values=0)
-            visitData.append(da)
+            visitData.extend([da]*len(ims))
+            # elm = np.pad(da, ((4,4), (3,3), (0,0)), mode='constant', constant_values=0) # 24x26x7 --> 32x32x7
+            # visitData.append(da)
+
             # append label data
             l = vPath.split(os.path.sep)[-2]
             label = CLASSES.index(l)
@@ -250,10 +257,17 @@ def image_gen(imagePath, mode='train', bs=BATCH_SIZE, numClasses=len(CLASSES)):
                 if mode != 'train':
                     break
             # append image data
-            #im = cv2.imread(iPath)
-            #im = im / 255.0
-            #imageData.append(im)
-            imageData.append(randomCropAndNormal(iPath))
+            im = cv2.imread(iPath)
+            im = im / 255.0
+            ims = [
+                im,
+                cv2.GaussianBlur(im,(3,3),0),
+                rotate(im, 2),
+                rotate(im, 3),
+                rotate(im, -2),
+                rotate(im, -3)]
+            imageData.extend(ims)
+            # imageData.append(randomCropAndNormal(iPath))
 
             # append label data
             l = iPath.split(os.path.sep)[-2]
