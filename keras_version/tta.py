@@ -11,12 +11,15 @@ from keras.models import load_model
 
 def tta_core(model, iP, vP, aug=True):
     # load original data
-    im = randomCropAndNormal(iP)
+    # im = randomCropAndNormal(iP)
+    im = cv2.imread(iP)
+    im = im / 255.0
     vp = np.load(vP)
     # core
     if aug:
         imlist = [
             im,
+            cv2.GaussianBlur(im,(3,3),0),
             rotate(im, 2), 
             rotate(im, 3), 
             rotate(im, -2), 
