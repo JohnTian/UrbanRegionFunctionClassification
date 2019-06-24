@@ -64,7 +64,7 @@ def create_image_model(HEIGHT, WIDTH, CHANNEL):
     # define the model input
     inputs = Input(shape=(HEIGHT, WIDTH, CHANNEL))
     # loop over the number of filters
-    filters = (16,32,64)
+    filters = (8,16,32)
     idxOfFilters = list(range(len(filters)))
     flagOfPool2D = (True,True,True)
     chanDim = -1
