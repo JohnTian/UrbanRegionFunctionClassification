@@ -36,7 +36,7 @@ validGen = create_data_gen(validImagePath, validVisitPath, 'valid')
 testGen = create_data_gen(testImagePath, testVisitPath, 'test')
 
 print("[INFO] building model ...")
-imageModel = create_image_model(88, 88, 3)
+imageModel = create_image_model(100, 100, 3)
 visitModel = create_visit_model(24, 26, 7)
 combinedInput = keras.layers.concatenate([imageModel.output, visitModel.output])
 x = Dense(16, activation="relu")(combinedInput)

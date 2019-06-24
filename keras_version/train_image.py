@@ -30,8 +30,8 @@ validGen = image_gen(validImagePath, 'valid')
 testGen = image_gen(testImagePath, 'test')
 
 print("[INFO] building model ...")
-model = create_image_model(88, 88, 3)
-#model = create_image_model_baseon_pretrained(88, 88, 3)
+model = create_image_model(100, 100, 3)
+#model = create_image_model_baseon_pretrained(100, 100, 3)
 model.summary()
 # save model structure in file
 if not os.path.exists(config.MODEL_PATH):
@@ -70,7 +70,7 @@ lr_reducer = keras.callbacks.ReduceLROnPlateau(
 )
 callbacks = [
 	checkpoint,
-	lr_reducer,
+	# lr_reducer,
 	# lr_scheduler,
 	keras.callbacks.TensorBoard(log_dir='log',histogram_freq=0)
 ]
