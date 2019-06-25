@@ -1,0 +1,377 @@
+#encoding:utf-8
+from __future__ import print_function
+import os 
+import time 
+import json 
+import torch 
+import random 
+import warnings
+import torchvision
+import numpy as np 
+import pandas as pd 
+
+from utils import *
+from multimodal import MultiModalDataset,MultiModalNet,CosineAnnealingLR
+
+from tqdm import tqdm 
+from config import config
+from datetime import datetime
+from torch import nn,optim
+from collections import OrderedDict
+from torch.autograd import Variable
+from torch.utils.data import DataLoader
+from torch.optim import lr_scheduler
+from sklearn.model_selection import train_test_split
+from timeit import default_timer as timer
+from sklearn.metrics import f1_score,accuracy_score
+import torch.nn.functional as F
+
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
+# 1. set random seed
+random.seed(2050)
+np.random.seed(2050)
+torch.manual_seed(2050)
+torch.cuda.manual_seed_all(2050)
+#os.environ["CUDA_VISIBLE_DEVICES"] = "0,1"
+torch.backends.cudnn.benchmark = True
+warnings.filterwarnings('ignore')
+
+if not os.path.exists("./logs/"):
+    os.mkdir("./logs/")
+
+log = Logger()
+log.open("logs/%s_log_train.txt"%config.model_name,mode="a")
+log.write("\n----------------------------------------------- [START %s] %s\n\n" % (datetime.now().strftime('%Y-%m-%d %H:%M:%S'), '-' * 51))
+log.write('                           |------------ Train -------|----------- Valid ---------|----------Best Results---|------------|\n')
+log.write('mode     iter     epoch    |    acc  loss  f1_macro   |    acc  loss  f1_macro    |    loss  f1_macro       | time       |\n')
+log.write('-------------------------------------------------------------------------------------------------------------------------|\n')
+
+
+def train(train_loader,model,criterion,optimizer,epoch,valid_metrics,best_results,start):
+    losses = AverageMeter()
+    f1 = AverageMeter()
+    acc = AverageMeter()
+
+    model.train()
+    for i,(images,visit,target) in enumerate(train_loader):
+        visit=visit.to(device)
+        images = images.to(device)
+        indx_target=target.clone()
+        target = torch.from_numpy(np.array(target)).long().to(device)
+        # compute output
+        output = model(images,visit)
+        loss = criterion(output,target)
+        losses.update(loss.item(),images.size(0))
+        f1_batch = f1_score(target.cpu().data.numpy(),np.argmax(F.softmax(output).cpu().data.numpy(),axis=1),average='macro')
+        acc_score=accuracy_score(target.cpu().data.numpy(),np.argmax(F.softmax(output).cpu().data.numpy(),axis=1))
+        f1.update(f1_batch,images.size(0))
+        acc.update(acc_score,images.size(0))
+        optimizer.zero_grad()
+        loss.backward()
+        optimizer.step()
+        
+        print('\r',end='',flush=True)
+        message = '%s %5.1f %6.1f      |   %0.3f  %0.3f  %0.3f  | %0.3f  %0.3f  %0.4f   | %s  %s  %s |   %s' % (\
+                "train", i/len(train_loader) + epoch, epoch,
+                acc.avg, losses.avg, f1.avg,
+                valid_metrics[0], valid_metrics[1],valid_metrics[2],
+                str(best_results[0])[:8],str(best_results[1])[:8],str(best_results[2])[:8],
+                time_to_str((timer() - start),'min'))
+        print(message , end='',flush=True)
+    log.write("\n")
+    #log.write(message)
+    #log.write("\n")
+    return [acc.avg,losses.avg,f1.avg]
+
+# 2. evaluate function
+def evaluate(val_loader,model,criterion,epoch,train_metrics,best_results,start):
+    # only meter loss and f1 score
+    losses = AverageMeter()
+    f1 = AverageMeter()
+    acc= AverageMeter()
+    # switch mode for evaluation
+    model.to(device)
+    model.eval()
+    with torch.no_grad():
+        for i, (images,visit,target) in enumerate(val_loader):
+            images_var = images.to(device)
+            visit=visit.to(device)
+            indx_target=target.clone()
+            target = torch.from_numpy(np.array(target)).long().to(device)
+            
+            output = model(images_var,visit)
+            loss = criterion(output,target)
+            losses.update(loss.item(),images_var.size(0))
+            f1_batch = f1_score(target.cpu().data.numpy(),np.argmax(F.softmax(output).cpu().data.numpy(),axis=1),average='macro')
+            acc_score=accuracy_score(target.cpu().data.numpy(),np.argmax(F.softmax(output).cpu().data.numpy(),axis=1))        
+            f1.update(f1_batch,images.size(0))
+            acc.update(acc_score,images.size(0))
+            print('\r',end='',flush=True)
+            message = '%s   %5.1f %6.1f     |     %0.3f  %0.3f   %0.3f    | %0.3f  %0.3f  %0.4f  | %s  %s  %s  |  %s' % (\
+                    "val", i/len(val_loader) + epoch, epoch,                    
+                    acc.avg,losses.avg,f1.avg,
+                    train_metrics[0], train_metrics[1],train_metrics[2],
+                    str(best_results[0])[:8],str(best_results[1])[:8],str(best_results[2])[:8],
+                    time_to_str((timer() - start),'min'))
+
+            print(message, end='',flush=True)
+        log.write("\n")
+        #log.write(message)
+        #log.write("\n")
+        
+    return [acc.avg,losses.avg,f1.avg]
+
+# 3. test model on public dataset and save the probability matrix
+def test(test_loader,model,folds):
+    sample_submission_df = pd.read_csv("./test.csv")
+    #3.1 confirm the model converted to cuda
+    filenames,labels ,submissions= [],[],[]
+    model.to(device)
+    model.eval()
+    submit_results = []
+    for i,(input,visit,filepath) in tqdm(enumerate(test_loader)):
+        #3.2 change everything to cuda and get only basename
+        filepath = [os.path.basename(x) for x in filepath]
+        with torch.no_grad():
+            image_var = input.to(device)
+            visit=visit.to(device)
+            y_pred = model(image_var,visit)
+            label=F.softmax(y_pred).cpu().data.numpy()
+            labels.append(label==np.max(label))
+            filenames.append(filepath)
+
+    for row in np.concatenate(labels):
+        subrow=np.argmax(row)
+        submissions.append(subrow)
+    sample_submission_df['Predicted'] = submissions
+    sample_submission_df.to_csv('./submit/%s_bestloss_submission.csv'%config.model_name, index=None)
+
+# ---------------------------------------------------------------------------------------------------
+from imutils import paths
+from imgaug import augmenters as iaa
+def ttaug(image):
+    augment_img = iaa.Sequential([
+        iaa.Fliplr(0.5),
+        iaa.Flipud(0.5),
+        iaa.GaussianBlur((0, 1.0)),
+        iaa.AdditiveGaussianNoise(
+                loc=0, scale=(0.0, 0.05*255), per_channel=0.5
+            ),
+        # iaa.ContrastNormalization((0.5, 2.0), per_channel=0.5),
+        #iaa.Multiply((1.2, 1.5)),
+        iaa.SomeOf((0,4),[
+            iaa.Affine(rotate=90),
+            iaa.Affine(rotate=180),
+            iaa.Affine(rotate=270),
+            iaa.Affine(shear=(-16, 16)),
+        ]),
+        iaa.OneOf([
+                #iaa.Crop(px=(0, 12)),
+                iaa.AverageBlur(k=(2, 7)), # blur image using local means with kernel sizes between 2 and 7
+                iaa.MedianBlur(k=(3, 11)), # blur image using local medians with kernel sizes between 2 and 7
+                #iaa.Fliplr(0.5),
+                iaa.GaussianBlur((0, 3.0)), # blur images with a sigma between 0 and 3.0
+            ]),
+        #iaa.WithColorspace(to_colorspace="HSV", from_colorspace="RGB",
+        #             children=iaa.WithChannels(0, iaa.Add(10))),
+        iaa.Sharpen(alpha=(0, 1.0), lightness=(0.75, 1.5)), # sharpen images
+        ], random_order=True)
+    image_aug = augment_img.augment_image(image)
+    return image_aug
+
+def ttacore(model, iPath, vPath, b_debug=False):
+    im = cv2.imread(iPath)
+    vi = np.load(vPath)
+    ims = [im, ttaug(im), ttaug(im), ttaug(im), ttaug(im)]
+    vis = [vi] * len(ims)
+    preds = []
+    for im, vi in zip(ims, vis):
+        with torch.no_grad():
+            im = np.expand_dims(im, axis=0)
+            im = np.transpose(im, [0, 3, 1, 2])
+            im = torch.from_numpy(im).float().to(device)
+            
+            vi = np.expand_dims(vi, axis=0)
+            vi = np.transpose(vi, [0, 3, 1, 2])
+            vi = torch.from_numpy(vi).float().to(device)
+            y_pred = model(im, vi)
+            label=F.softmax(y_pred).cpu().data.numpy()
+            if b_debug:
+                print('[INFO] label:\n {}'.format(label))
+            preds.append(label)
+    preds = np.mean(preds, axis=0)
+    preds = np.argmax(preds)
+    return preds + 1
+
+def dotta(model, b_debug=False):
+    model.to(device)
+    model.eval()
+    testImagePaths = paths.list_images(config.test_data)
+    testVisitPaths = paths.list_files(config.test_vis, validExts=('.npy'))
+    assert len(testImagePaths) == len(testVisitPaths)
+    fo = open('submission.txt', 'w')
+    for iPath, vPath in zip(testImagePaths, testVisitPaths):
+        iName = os.path.split(os.path.sep)[-1]
+        vName = os.path.split(os.path.sep)[-1]
+        if iName[:-4] == vName[:-4]:
+            preds = ttacore(model, iPath, vPath, b_debug)
+            fo.write(iName[:-4]+'\t' + str(preds) + '\n')
+            if b_debug:
+                break
+    fo.close()
+# ---------------------------------------------------------------------------------------------------
+
+# 4. main function
+def main():
+    fold = 0
+    # 4.1 mkdirs
+    if not os.path.exists(config.submit):
+        os.makedirs(config.submit)
+    if not os.path.exists(config.weights + config.model_name + os.sep +str(fold)):
+        os.makedirs(config.weights + config.model_name + os.sep +str(fold))
+    if not os.path.exists(config.best_models):
+        os.mkdir(config.best_models)
+    if not os.path.exists("./logs/"):
+        os.mkdir("./logs/")
+    
+    #4.2 get model
+    # model=MultiModalNet("se_resnext101_32x4d","dpn107",0.5)
+    model=MultiModalNet("se_resnext50_32x4d","dpn26",0.5)
+
+    #4.3 optim & criterion
+    #optimizer = optim.SGD(model.parameters(),lr = config.lr,momentum=0.9,weight_decay=1e-4)
+    criterion=nn.CrossEntropyLoss().to(device)   #多任务处理，所以选择交叉熵
+
+    # optimizer = optim.SGD([{'params': model.base.parameters()},
+    #                        {'params': model.classifier.parameters(), 'lr': config.lr*0.1}], lr=1e-5,momentum=0.9,weight_decay=1e-4)
+    #betas = (0.9,0.999), eps = 1e-08,
+    optimizer = optim.Adam(model.parameters(),lr = config.lr, betas = (0.9,0.999), weight_decay=1e-4)#betas = (0.9,0.999), eps = 1e-08,
+
+# class SGD(Optimizer):
+#     def __init__(self, params, lr=required, momentum=0, dampening=0, weight_decay1=0, weight_decay2=0, nesterov=False):
+#         defaults = dict(lr=lr, momentum=momentum, dampening=dampening,
+#                         weight_decay1=weight_decay1, weight_decay2=weight_decay2, nesterov=nesterov)
+#         if nesterov and (momentum <= 0 or dampening != 0):
+#             raise ValueError("Nesterov momentum requires a momentum and zero dampening")
+#         super(SGD, self).__init__(params, defaults)
+#     def __setstate__(self, state):
+#         super(SGD, self).__setstate__(state)
+#         for group in self.param_groups:
+#             group.setdefault('nesterov', False)
+#     def step(self, closure=None):
+#         """Performs a single optimization step. Arguments: closure (callable, optional): A closure that reevaluates the model and returns the loss. """
+#         loss = None
+#         if closure is not None:
+#             loss = closure()
+#         for group in self.param_groups:
+#             weight_decay1 = group['weight_decay1']
+#             weight_decay2 = group['weight_decay2']
+#             momentum = group['momentum']
+#             dampening = group['dampening']
+#             nesterov = group['nesterov']
+#             for p in group['params']:
+#                 if p.grad is None:
+#                     continue
+#                 d_p = p.grad.data
+#                 if weight_decay1 != 0:
+#                     d_p.add_(weight_decay1, torch.sign(p.data))
+#                 if weight_decay2 != 0:
+#                     d_p.add_(weight_decay2, p.data)
+#                 if momentum != 0:
+#                     param_state = self.state[p]
+#                     if 'momentum_buffer' not in param_state:
+#                         buf = param_state['momentum_buffer'] = torch.zeros_like(p.data)
+#                         buf.mul_(momentum).add_(d_p)
+#                     else:
+#                         buf = param_state['momentum_buffer']
+#                         buf.mul_(momentum).add_(1 - dampening, d_p)
+#                     if nesterov:
+#                         d_p = d_p.add(momentum, buf)
+#                     else:
+#                         d_p = buf
+#                 p.data.add_(-group['lr'], d_p)
+#         return loss
+
+    start_epoch = 0
+    best_acc=0
+    best_loss = np.inf
+    best_f1 = 0
+    best_results = [0,np.inf,0]
+    val_metrics = [0,np.inf,0]
+    resume = False
+    if resume:
+        checkpoint = torch.load(r'./checkpoints/best_models/seresnext101_dpn107_defrog_multimodal_fold_0_model_best_loss.pth.tar')
+        best_acc = checkpoint['best_acc']
+        best_loss = checkpoint['best_loss']
+        best_f1 = checkpoint['best_f1']
+        start_epoch = checkpoint['epoch']
+
+    if torch.cuda.device_count() > 1:
+        model = nn.DataParallel(model)
+    model.to(device)
+
+    all_files = pd.read_csv("./train.csv")
+    test_files = pd.read_csv("./test.csv")
+    train_data_list,val_data_list = train_test_split(all_files, test_size=0.1, random_state = 2050)
+
+    # load dataset
+    train_gen = MultiModalDataset(train_data_list,config.train_data,config.train_vis,mode="train")
+    train_loader = DataLoader(train_gen,batch_size=config.batch_size,shuffle=True,pin_memory=True,num_workers=1) #num_worker is limited by shared memory in Docker!
+
+    val_gen = MultiModalDataset(val_data_list,config.train_data,config.train_vis,augument=False,mode="train")
+    val_loader = DataLoader(val_gen,batch_size=config.batch_size,shuffle=False,pin_memory=True,num_workers=1)
+
+    # test_gen = MultiModalDataset(test_files,config.test_data,config.test_vis,augument=False,mode="test")
+    # test_loader = DataLoader(test_gen,1,shuffle=False,pin_memory=True,num_workers=1)
+
+    #scheduler = lr_scheduler.StepLR(optimizer,step_size=10,gamma=0.1,last_epoch = -1)
+    scheduler = lr_scheduler.ReduceLROnPlateau(optimizer)
+    #n_batches = int(len(train_loader.dataset) // train_loader.batch_size)
+    #scheduler = CosineAnnealingLR(optimizer, T_max=n_batches*2)
+    start = timer()
+
+    #train
+    for epoch in range(0,config.epochs):
+        scheduler.step(epoch)
+        # train
+        train_metrics = train(train_loader,model,criterion,optimizer,epoch,val_metrics,best_results,start)
+        # val
+        val_metrics = evaluate(val_loader,model,criterion,epoch,train_metrics,best_results,start)
+        # check results
+        is_best_acc=val_metrics[0] > best_results[0] 
+        best_results[0] = max(val_metrics[0],best_results[0])
+        is_best_loss = val_metrics[1] < best_results[1]
+        best_results[1] = min(val_metrics[1],best_results[1])
+        is_best_f1 = val_metrics[2] > best_results[2]
+        best_results[2] = max(val_metrics[2],best_results[2])   
+        # save model
+        save_checkpoint({
+                    "epoch":epoch + 1,
+                    "model_name":config.model_name,
+                    "state_dict":model.state_dict(),
+                    "best_acc":best_results[0],
+                    "best_loss":best_results[1],
+                    "optimizer":optimizer.state_dict(),
+                    "fold":fold,
+                    "best_f1":best_results[2],
+        },is_best_acc,is_best_loss,is_best_f1,fold)
+        # print logs
+        print('\r',end='',flush=True)
+        log.write('%s  %5.1f %6.1f      |   %0.3f   %0.3f   %0.3f     |  %0.3f   %0.3f    %0.3f    |   %s  %s  %s | %s' % (\
+                "best", epoch, epoch,                    
+                train_metrics[0], train_metrics[1],train_metrics[2],
+                val_metrics[0],val_metrics[1],val_metrics[2],
+                str(best_results[0])[:8],str(best_results[1])[:8],str(best_results[2])[:8],
+                time_to_str((timer() - start),'min'))
+            )
+        log.write("\n")
+        time.sleep(0.01)
+
+    best_model = torch.load("%s/%s_fold_%s_model_best_loss.pth.tar"%(config.best_models,config.model_name,str(fold)))
+    model.load_state_dict(best_model["state_dict"])
+    # test(test_loader,model,fold)
+    dotta(model, True)
+
+if __name__ == "__main__":
+    main()
