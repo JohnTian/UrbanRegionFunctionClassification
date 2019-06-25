@@ -212,7 +212,7 @@ def dotta(model, b_debug=False):
     testVisitPath = config.test_vis
     fo = open('submission.txt', 'w')
     for iPath in testImagePaths:
-        iName = iPath(os.path.sep)[-1]
+        iName = iPath.split(os.path.sep)[-1]
         vName = iName.replace('jpg', 'npy')
         vPath = os.path.sep.join([testVisitPath, vName])
         pred = ttacore(model, iPath, vPath, b_debug)
