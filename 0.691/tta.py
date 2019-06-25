@@ -207,18 +207,21 @@ def ttacore(model, iPath, vPath, b_debug=False):
 def dotta(model, b_debug=False):
     model.to(device)
     model.eval()
-    testImagePaths = paths.list_images(config.test_data)
-    testVisitPaths = paths.list_files(config.test_vis, validExts=('.npy'))
-    assert len(testImagePaths) == len(testVisitPaths)
+    testImagePaths = list(paths.list_images(config.test_data))
+    testImagePaths.sort()
+    testVisitPath = config.test_vis
     fo = open('submission.txt', 'w')
-    for iPath, vPath in zip(testImagePaths, testVisitPaths):
-        iName = os.path.split(os.path.sep)[-1]
-        vName = os.path.split(os.path.sep)[-1]
-        if iName[:-4] == vName[:-4]:
-            preds = ttacore(model, iPath, vPath, b_debug)
-            fo.write(iName[:-4]+'\t' + str(preds) + '\n')
-            if b_debug:
-                break
+    for iPath in testImagePaths:
+        iName = iPath(os.path.sep)[-1]
+        vName = iName.replace('jpg', 'npy')
+        vPath = os.path.sep.join([testVisitPath, vName])
+        pred = ttacore(model, iPath, vPath, b_debug)
+        testID = iName[:-4].zfill(6)
+        print('[INFO] ID-->Pred: {0} --> {1}'.format(testID, pred))
+        line = testID + '\t' + str(pred) + '\n'
+        fo.write(line)
+        if b_debug:
+            break
     fo.close()
 # ---------------------------------------------------------------------------------------------------
 
