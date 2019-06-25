@@ -189,11 +189,11 @@ def ttacore(model, iPath, vPath, b_debug=False):
     for im, vi in zip(ims, vis):
         with torch.no_grad():
             im = np.expand_dims(im, axis=0)
-            im = np.transpose(im, [0, 3, 1, 2])
+            im = np.transpose(im, [0, 3, 1, 2]).copy()
             im = torch.from_numpy(im).float().to(device)
             
             vi = np.expand_dims(vi, axis=0)
-            vi = np.transpose(vi, [0, 3, 1, 2])
+            vi = np.transpose(vi, [0, 3, 1, 2]).copy()
             vi = torch.from_numpy(vi).float().to(device)
             y_pred = model(im, vi)
             label=F.softmax(y_pred).cpu().data.numpy()
