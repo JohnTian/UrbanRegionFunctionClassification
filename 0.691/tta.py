@@ -150,6 +150,8 @@ def test(test_loader,model,folds):
 # ---------------------------------------------------------------------------------------------------
 from imutils import paths
 from imgaug import augmenters as iaa
+from torchvision import transforms as T
+
 def ttaug(image):
     augment_img = iaa.Sequential([
         iaa.Fliplr(0.5),
@@ -182,27 +184,33 @@ def ttaug(image):
 
 def ttacore(model, iPath, vPath, b_debug=False):
     im = cv2.imread(iPath)
-    vi = np.load(vPath)
+    vi = np.load(vPath).transpose(1,2,0)
     ims = [im, ttaug(im), ttaug(im), ttaug(im), ttaug(im)]
     vis = [vi] * len(ims)
     preds = []
     for im, vi in zip(ims, vis):
         with torch.no_grad():
-            im = np.expand_dims(im, axis=0)
-            im = np.transpose(im, [0, 3, 1, 2]).copy()
-            im = torch.from_numpy(im).float().to(device)
-            
-            vi = np.expand_dims(vi, axis=0)
-            vi = np.transpose(vi, [0, 3, 1, 2]).copy()
-            vi = torch.from_numpy(vi).float().to(device)
+            im = T.Compose([T.ToPILImage(),T.ToTensor()])(im).float()
+            vi = T.Compose([T.ToTensor()])(vi).float()
+            im = torch.unsqueeze(im, 0)
+            vi = torch.unsqueeze(vi, 0)
+            im = im.to(device)
+            vi = vi.to(device)
             y_pred = model(im, vi)
-            label=F.softmax(y_pred).cpu().data.numpy()
+            label = y_pred.cuda().data.cpu().numpy()
             if b_debug:
-                print('[INFO] label:\n {}'.format(label))
+                print('[INFO] label:\n{}'.format(label))
             preds.append(label)
+    if b_debug:
+        print('[INFO] preds:\n{}'.format(preds))
     preds = np.mean(preds, axis=0)
+    if b_debug:
+        print('[INFO] mean preds:\n{}'.format(preds))
     preds = np.argmax(preds)
+    if b_debug:
+        print('[INFO] argmax mean preds:\n{}'.format(preds))
     return preds + 1
+
 
 def dotta(model, b_debug=False):
     model.to(device)
@@ -210,15 +218,14 @@ def dotta(model, b_debug=False):
     testImagePaths = list(paths.list_images(config.test_data))
     testImagePaths.sort()
     testVisitPath = config.test_vis
-    fo = open('submission.txt', 'w')
+    fo = open('submit/tta.txt', 'w')
     for iPath in testImagePaths:
         iName = iPath.split(os.path.sep)[-1]
         vName = iName.replace('jpg', 'npy')
         vPath = os.path.sep.join([testVisitPath, vName])
-        pred = ttacore(model, iPath, vPath, b_debug)
-        testID = iName[:-4].zfill(6)
-        print('[INFO] ID-->Pred: {0} --> {1}'.format(testID, pred))
-        line = testID + '\t' + str(pred) + '\n'
+        preds = ttacore(model, iPath, vPath, b_debug)
+        print('[INFO] ID-->Preds: {0} --> {1}'.format(iName[:-4].zfill(6), preds))
+        line = iName[:-4].zfill(6) + '\t' + str(preds).zfill(3) + '\n'
         fo.write(line)
         if b_debug:
             break
