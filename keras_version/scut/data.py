@@ -127,6 +127,7 @@ def preprocessing_data_gen():
     for code, value in trainData.items():
 	trainDict[code] = len(value)
     maxNum = max(trainDict.values())
+    random.seed(20190621)
     for label in trainDict.keys():
 	for _ in range(maxNum - len(trainData[label])):
 	    # 随机从均衡化前的0-trainDict[label] - 1区间内采样添加
@@ -217,30 +218,34 @@ def create_data_gen(imagePath, visitPath, mode='train', bs=BATCH_SIZE, numClasse
                 vPath = fVisit.readline().strip('\n')
                 if mode != 'train':
                     break
-            # append image data
-            im = cv2.imread(iPath)
-            im = im / 255.0
-            ims = [
-                im,
-                cv2.GaussianBlur(im,(3,3),0),
-                rotate(im, 2),
-                rotate(im, 3),
-                rotate(im, -2),
-                rotate(im, -3)]
-            imageData.extend(ims)
-            # imageData.append(randomCropAndNormal(iPath))
-
-            # append visit data
-            da = np.load(vPath)
-            visitData.extend([da]*len(ims))
-            # elm = np.pad(da, ((4,4), (3,3), (0,0)), mode='constant', constant_values=0) # 24x26x7 --> 32x32x7
-            # visitData.append(da)
-
-            # append label data
-            l = vPath.split(os.path.sep)[-2]
-            label = CLASSES.index(l)
-            label = keras.utils.to_categorical(label, num_classes=numClasses)
-            labels.append(label)
+            if mode == 'train':
+                # image
+                im = cv2.imread(iPath)
+                im = im / 255.0
+                ims = [im, cv2.GaussianBlur(im,(3,3),0), rotate(im, 2), rotate(im, -2)]
+                imageData.extend(ims)
+                # visit
+                da = np.load(vPath)
+                visitData.extend([da]*len(ims))
+                # label
+                l = iPath.split(os.path.sep)[-2]
+                label = CLASSES.index(l)
+                label = keras.utils.to_categorical(label, num_classes=numClasses)
+                labels.extend([label]*len(ims))
+            else:
+                # image
+                im = cv2.imread(iPath)
+                im = im / 255.0
+                imageData.append(im)
+                # visit
+                da = np.load(vPath)
+                # elm = np.pad(da, ((4,4), (3,3), (0,0)), mode='constant', constant_values=0) # 24x26x7 --> 32x32x7
+                visitData.append(da)
+                # label
+                l = iPath.split(os.path.sep)[-2]
+                label = CLASSES.index(l)
+                label = keras.utils.to_categorical(label, num_classes=numClasses)
+                labels.append(label)
         yield ([np.array(imageData), np.array(visitData)], np.array(labels))
 
 
@@ -256,24 +261,27 @@ def image_gen(imagePath, mode='train', bs=BATCH_SIZE, numClasses=len(CLASSES)):
                 iPath = fImage.readline().strip('\n')
                 if mode != 'train':
                     break
-            # append image data
-            im = cv2.imread(iPath)
-            im = im / 255.0
-            ims = [
-                im,
-                cv2.GaussianBlur(im,(3,3),0),
-                rotate(im, 2),
-                rotate(im, 3),
-                rotate(im, -2),
-                rotate(im, -3)]
-            imageData.extend(ims)
-            # imageData.append(randomCropAndNormal(iPath))
-
-            # append label data
-            l = iPath.split(os.path.sep)[-2]
-            label = CLASSES.index(l)
-            label = keras.utils.to_categorical(label, num_classes=numClasses)
-            labels.append(label)
+            if mode == 'train':
+                # image
+                im = cv2.imread(iPath)
+                im = im / 255.0
+                ims = [im, cv2.GaussianBlur(im,(3,3),0), rotate(im, 2), rotate(im, -2)]
+                imageData.extend(ims)
+                # label
+                l = iPath.split(os.path.sep)[-2]
+                label = CLASSES.index(l)
+                label = keras.utils.to_categorical(label, num_classes=numClasses)
+                labels.extend([label]*len(ims))
+            else:
+                # image
+                im = cv2.imread(iPath)
+                im = im / 255.0
+                imageData.append(im)
+                # label
+                l = iPath.split(os.path.sep)[-2]
+                label = CLASSES.index(l)
+                label = keras.utils.to_categorical(label, num_classes=numClasses)
+                labels.append(label)
         yield (np.array(imageData), np.array(labels))
 
 
