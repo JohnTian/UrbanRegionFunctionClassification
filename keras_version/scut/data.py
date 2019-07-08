@@ -119,19 +119,19 @@ def preprocessing_data_gen():
     # ------------------------------------  训练集均衡化 -- 均衡各个类的图像个数  ------------------------------------
     trainData = {}
     for code in CLASSES:
-	trainData[code] = []
+	    trainData[code] = []
     for filePath in paths.list_images(trainImagePath):
         code = filePath.split(os.path.sep)[-2]
         trainData[code].append(filePath)
     trainDict = {}
     for code, value in trainData.items():
-	trainDict[code] = len(value)
+	    trainDict[code] = len(value)
     maxNum = max(trainDict.values())
     random.seed(20190621)
     for label in trainDict.keys():
-	for _ in range(maxNum - len(trainData[label])):
-	    # 随机从均衡化前的0-trainDict[label] - 1区间内采样添加
-	    trainData[label].append(trainData[label][random.randint(0, trainDict[label] - 1)])
+	    for _ in range(maxNum - len(trainData[label])):
+            # 随机从均衡化前的0-trainDict[label] - 1区间内采样添加
+            trainData[label].append(trainData[label][random.randint(0, trainDict[label] - 1)])
     if True:
 	print('[DEBUG] after balance trainData...')
 	for k, v in trainData.items():
